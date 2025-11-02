@@ -1,0 +1,43 @@
+﻿.reports-filter-button, .reports-filter-button:hover{
+    all: unset;
+    cursor:pointer;
+}
+.ant-table table {
+    text-align: center;
+}
+.ant-table-thead > tr > th{
+     text-align: center;
+}
+.ant-table-content {
+    width: 70%;
+    justify-self: center;
+}
+.ant-table-thead > tr > th {
+    background-color: #424242;
+    color:white;
+}
+.ant-table-tbody > tr.ant-table-row:hover > td {
+    background-color: #F8F7EC;
+}
+.ant-table-tbody {
+    background-color: #D9D5BA;
+}
+.ant-table-container {
+    background-color: #B9BAA3;
+}
+
+.reports-arrow{
+    padding: 2px;
+    background-color: #424242;
+    border-radius:40%;
+    text-align:center;
+    display:block;
+}
+.reports-arrow:hover {
+    padding: 2px;
+    background-color: #424242;
+    border-radius:40%;
+    color: #fff;
+    text-align:center;
+    display:block;
+}
