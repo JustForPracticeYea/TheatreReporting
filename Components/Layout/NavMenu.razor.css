@@ -52,7 +52,7 @@
 
 .menu-list {
     top: 0;
-    right: 0;
+    left: 0;
     position: fixed;
     display: grid;
     gap: 2px;
@@ -60,7 +60,7 @@
     margin: 0;
     background: #463A3A;
     list-style-type: none;
-    transform: translateX(100%);
+    transform: translateX(-100%);
     transition: .3s;
     width: 200px;
 }

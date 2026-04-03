@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace TheaterReporting.Models
+namespace TheatreReportingApp.Models
 {
     public class Performance
     {
@@ -9,12 +9,15 @@ namespace TheaterReporting.Models
         public int PerformanceId { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Номер спектакля")]
         public int PerformanceNumber { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Место проведения")]
         public string Location { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Дата проведения спектакля")]
         public DateTime EventDateTime { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
@@ -94,7 +97,6 @@ namespace TheaterReporting.Models
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
         [Display(Name = "Количество зрителей обслуженных бесплатно")]
         public int NumViewrsServedFree { get; set; }
-
         public List<Report>? Reports { get; set; }
 
         public int PlayId { get; set; }

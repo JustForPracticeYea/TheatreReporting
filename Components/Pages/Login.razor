@@ -1,0 +1,90 @@
+﻿@page "/"
+@page "/login"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+
+@inject SignInManager<Models.Users> SignInManager
+@inject NavigationManager NavigationManager
+
+<h1 class="login-h1">Авторизция</h1>
+<div class="login-row">
+    <div class="col-md-4">
+        <section>
+            <div class="text-danger" style="font-size:large">
+                @errorMessage
+            </div>
+            <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
+                <DataAnnotationsValidator />
+                <hr />
+                <ValidationSummary class="text-danger" role="alert" />
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                    <label for="email" class="form-label">Почта</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
+                    <label for="password" class="form-label">Пароль</label>
+                </div>
+                <div class="checkbox mb-3">
+                    <label class="form-label" style="cursor:pointer">
+                        <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input" />
+                        Запомнить меня
+                    </label>
+                </div>
+                <div class="btn-login-center">
+                    <button type="submit" class="w-50 btn btn-lg btn-primary">Войти</button>
+                </div>
+            </EditForm>
+
+        </section>
+    </div>
+</div>
+
+@code {
+    private string? errorMessage;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (HttpMethods.IsGet(HttpContext.Request.Method))
+        {
+            // Clear the existing external cookie to ensure a clean login process
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+        }
+    }
+
+    public async Task LoginUser()
+    {
+        // This doesn't count login failures towards account lockout
+        // To enable password failures to trigger account lockout, set lockoutOnFailure: true
+        var result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+        if (result.Succeeded)
+        {
+            NavigationManager.NavigateTo("Plays");
+        }
+        else
+        {
+            errorMessage = "Неверный логин или пароль";
+        }
+    }
+
+    private sealed class InputModel
+    {
+        [Required (ErrorMessage = "Почта обязательна для заполнения")]
+        [EmailAddress (ErrorMessage = "Неверный формат почты")]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "Пароль обязателен для заполнения")]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = "";
+
+        [Display(Name = "Запомнить меня?")]
+        public bool RememberMe { get; set; }
+    }
+}

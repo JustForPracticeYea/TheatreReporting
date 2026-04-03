@@ -7,7 +7,7 @@ body {
 }
 
 a, .btn-link {
-    color: #006bb7;
+    color: black;
 }
 
 .btn-primary {
@@ -218,7 +218,72 @@ h1:focus {
     all:unset;
     color:white;
 }
-.move-forward-arrow:hover {
-    all: unset;
-    cursor:pointer;
+    .move-forward-arrow:hover {
+        all: unset;
+        color: white;
+    }
+.nav-to-obj-play {
+    cursor: pointer;
+}
+
+.login-row {
+    --bs-gutter-x: 1.5rem;
+    --bs-gutter-y: 0;
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: calc(var(--bs-gutter-y) * -1);
+    margin-right: calc(var(--bs-gutter-x) * -.5);
+    margin-left: calc(var(--bs-gutter-x) * -.5);
+    justify-content:center;
+}
+
+.login-h1{
+    text-align:center;
+}
+
+.btn-login-center{
+    text-align:center;
+}
+
+@media (min-width: 768px) {
+    .col-md-4 {
+        flex: 0 0 auto;
+        width: 25%;
+    }
+}
+
+/* Фиксированная ширина для колонок сетки */
+.ant-col {
+    width: 300px;
+    min-width: 250px;
+    max-width: 350px;
+    flex: 0 0 auto !important;
+}
+
+.auth-user-panel {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    justify-content: flex-end;
+    gap: 15px;
+    width: 100%;
+    font-size: 24px;
+}
+
+    .auth-user-panel a {
+        text-decoration:none;
+        color:black;
+        margin: 0;
+        text-align: center;
+    }
+    .auth-user-panel a:hover {
+        text-decoration: none;
+        color: black;
+        margin: 0;
+        text-align: center;
+    }
+
+.logout-button {
+    flex-shrink: 0;
+    text-align: center;
 }

@@ -1,0 +1,134 @@
+﻿@page "/users"
+@rendermode InteractiveServer
+@using System.ComponentModel
+@using System.ComponentModel.DataAnnotations
+@using AntDesign.TableModels
+@using Microsoft.AspNetCore.Authorization
+@using TheatreReportingApp.Models
+@using TheatreReportingApp.ViewModels
+@inject ModalService ModalService;
+@inject ConfirmService ComfirmService;
+@inject TheatreDbContext _context;
+@inject NavigationManager Navigation
+@attribute [Authorize(Roles = "Admin")]
+
+<div class="controls-container">
+    <PageHeader Class="site-page-header" Title="Список пользователей" />
+    <a class="add-button" @onclick="() => AddUser()">
+        <Icon Type="plus-square" Width="37px" Height="37px" />
+    </a>
+</div>
+@* <div class="search-string">
+    <Input Placeholder="Введите " @bind-Value="@_usersSearchString" />
+    <button class="search-button" @onclick="SearchUsers">
+        <Icon Type="search" />
+    </button>
+    <br />
+</div> *@
+<Table @ref="_usersTable" TItem="UserDto" PageSize="10" Total="_usersTotal" DataSource="_usersDataSource" OnChange="OnUsersChange">
+    <PropertyColumn Property="u => u.RowNumber"></PropertyColumn>
+    <PropertyColumn Property="u => u.Surname"></PropertyColumn>
+    <PropertyColumn Property="u => u.Name"></PropertyColumn>
+    <PropertyColumn Property="u => u.Fathername"></PropertyColumn>
+    <PropertyColumn Property="u => u.Rolename"></PropertyColumn>
+    <ActionColumn>
+        <a @onclick="() => EditUser(context.Id)"><Icon Type="form" Height="2em" Width="2em" /></a>
+        <a><Icon Type="delete" Height="2em" Width="2em" /></a>
+    </ActionColumn>
+</Table>
+    
+@code {
+    public ITable _usersTable;
+
+    List<UserDto> _usersDataSource = new();
+    int _usersTotal;
+    private string _usersSearchString = "";
+    private QueryModel<UserDto> _currentUsersQuery;
+
+    async Task OnUsersChange(QueryModel<UserDto> query)
+    {
+        _currentUsersQuery = query;
+        await LoadUsersData(query);
+    }
+
+    private async Task<List<UserDto>> GetAllUsersWithRolesAsync()
+    {
+        var users = await _context.Users
+            .Join(_context.UserRoles, u => u.Id, r => r.UserId, (u, r) => new { u, r })
+            .Join(_context.Roles, a => a.r.RoleId, rt => rt.Id, (a, rt) => new UserDto
+            {
+                Id = a.u.Id,
+                Surname = a.u.Surname,
+                Name = a.u.Name,
+                Fathername = a.u.Fathername,
+                Rolename = rt.Name
+            }).ToListAsync();
+
+        for (int i = 0; i < users.Count; i++)
+        {
+            users[i].RowNumber = i + 1;
+        }
+
+        return users;
+    }
+
+    private async Task LoadUsersData(QueryModel<UserDto> query = null)
+    {
+        var allUsers = await GetAllUsersWithRolesAsync();
+        _usersTotal = allUsers.Count;
+
+        if (query != null)
+        {
+            var queryable = allUsers.AsQueryable();
+
+            // if (!string.IsNullOrWhiteSpace(_usersSearchString))
+            // {
+            //     queryable = queryable.Where(u =>
+            //         (u.Surname != null && u.Surname.Contains(_usersSearchString)) ||
+            //         (u.Name != null && u.Name.Contains(_usersSearchString)) ||
+            //         (u.Fathername != null && u.Fathername.Contains(_usersSearchString)));
+            //     _usersTotal = queryable.Count();
+            // }
+            _usersDataSource = queryable
+                .Skip(query.PageSize * (query.PageIndex - 1))
+                .Take(query.PageSize)
+                .ToList();
+
+            for (int i = 0; i < _usersDataSource.Count; i++)
+            {
+                _usersDataSource[i].RowNumber = (query.PageIndex - 1) * query.PageSize + i + 1;
+            }
+        }
+        else
+        {
+            _usersDataSource = allUsers.Take(10).ToList();
+            for (int i = 0; i < _usersDataSource.Count; i++)
+            {
+                _usersDataSource[i].RowNumber = i + 1;
+            }
+            
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void EditUser(string userId)
+    {
+        Navigation.NavigateTo($"EditUser/{userId}");
+    }
+    private void AddUser()
+    {
+        Navigation.NavigateTo("AddUser");
+    }
+    // private async Task SearchUsers()
+    // {
+    //     if (_currentUsersQuery != null)
+    //     {
+    //         await LoadUsersData(_currentUsersQuery);
+    //     }
+    //     else
+    //     {
+    //         await LoadUsersData();
+    //     }
+    // }
+}

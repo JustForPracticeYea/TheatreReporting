@@ -1,4 +1,5 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
 
 <div class="page">
 
@@ -6,6 +7,21 @@
     <main>
         <div class="top-row px-4">
             <NavMenu />
+            <AuthorizeView>
+                <Authorized>
+                    <div class="auth-user-panel">
+                        <TheatreReportingApp.Components.Shared.FullUserName/>
+                        <form action="/logout" method="post">
+                            <AntiforgeryToken />
+                            <div class="logout-button">
+                                <button type="submit" class="btn btn-danger btn-sm">
+                                    Выйти
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </Authorized>
+            </AuthorizeView>
         </div>
 
         <article class="content px-4">

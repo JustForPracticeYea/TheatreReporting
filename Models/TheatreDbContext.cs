@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace TheaterReporting.Models
+namespace TheatreReportingApp.Models
 {
     public class TheatreDbContext : IdentityDbContext<Users>
     {

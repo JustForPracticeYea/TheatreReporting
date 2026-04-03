@@ -1,0 +1,117 @@
+﻿@page "/EditUser/{Id}"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using TheatreReportingApp.Models
+@using TheatreReportingApp.ViewModels
+@inject RoleManager<IdentityRole> RoleManager
+@inject UserManager<TheatreReportingApp.Models.Users> UserManager
+@inject NavigationManager Navigation
+@inject TheatreDbContext _context;
+@attribute [Authorize(Roles = "Admin")]
+
+<EditForm Model="@userDto" FormName="editUserForm" OnValidSubmit="@HandleValidSubmit">
+
+    <div class="form-group mb-3">
+        <label for="surname">Фамилия:</label>
+        <InputText id="surname" class="form-control" @bind-Value="userDto.Surname" />
+        <ValidationMessage For="@(() => userDto.Surname)" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="name">Имя:</label>
+        <InputText id="name" class="form-control" @bind-Value="userDto.Name" />
+        <ValidationMessage For="@(() => userDto.Name)" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="fathername">Отчество:</label>
+        <InputText id="fathername" class="form-control" @bind-Value="userDto.Fathername" />
+        <ValidationMessage For="@(() => userDto.Fathername)" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="email">Почта:</label>
+        <InputText id="email" class="form-control" @bind-Value="userDto.Email" />
+        <ValidationMessage For="@(() => userDto.Email)" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="role">Роль:</label>
+        <InputSelect id="role" class="form-control" @bind-Value="userDto.Rolename">
+            @foreach (var role in rolesToChoose)
+            {
+                <option value="@role.Name">@role.Name</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => userDto.Rolename)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+    <button type="button" class="btn btn-secondary ms-2" @onclick="Cancel">Отмена</button>
+</EditForm>
+
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+
+    private UserDto userDto;
+    private List<IdentityRole> rolesToChoose = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUser();
+    }
+
+    private async Task LoadUser()
+    {
+        var user = await UserManager.FindByIdAsync(Id);
+        var userRoles = await UserManager.GetRolesAsync(user);
+
+        userDto = new UserDto
+        {
+            Id = user.Id,
+            Surname = user.Surname,
+            Name = user.Name,
+            Fathername = user.Fathername,
+            Email = user.Email,
+            Rolename = userRoles.FirstOrDefault()
+        };
+        rolesToChoose = await RoleManager.Roles.ToListAsync();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        var user = await UserManager.FindByIdAsync(Id);
+
+        if (user != null)
+        {
+            user.Surname = userDto.Surname;
+            user.Name = userDto.Name;
+            user.Fathername = userDto.Fathername;
+            user.Email = userDto.Email;
+            user.UserName = userDto.Email;
+
+            await UserManager.UpdateAsync(user);
+
+            var currentRoles = await UserManager.GetRolesAsync(user);
+
+            if (currentRoles.Any())
+            {
+                await UserManager.RemoveFromRolesAsync(user, currentRoles);
+            }
+
+            if (!string.IsNullOrEmpty(userDto.Rolename))
+            {
+                await UserManager.AddToRoleAsync(user, userDto.Rolename);
+            }
+
+            Navigation.NavigateTo("/Users");
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/Users");
+    }
+}

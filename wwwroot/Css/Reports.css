@@ -25,19 +25,13 @@
 .ant-table-container {
     background-color: #B9BAA3;
 }
+.arrow {
+    all: unset;
+    color:black;
+}
 
-.reports-arrow{
-    padding: 2px;
-    background-color: #424242;
-    border-radius:40%;
-    text-align:center;
-    display:block;
-}
-.reports-arrow:hover {
-    padding: 2px;
-    background-color: #424242;
-    border-radius:40%;
-    color: #fff;
-    text-align:center;
-    display:block;
-}
+    .arrow:hover {
+        all: unset;
+        cursor: pointer;
+        color: black;
+    }

@@ -3,8 +3,10 @@
 @using AntDesign.TableModels
 @using System.ComponentModel.DataAnnotations
 @using System.ComponentModel
+@using Microsoft.AspNetCore.Authorization
 @inject ModalService ModalService;
 @inject ConfirmService ComfirmService;
+@attribute [Authorize]
 
 
 <PageHeader Class="site-page-header" Title="Список отчётов" />
@@ -30,7 +32,7 @@
     <ColumnDefinitions Context="row">
         <GenerateColumns />
         <ActionColumn>
-            <a class="move-forward-arrow reports-arrow"><Icon Type="arrow-right" Width="3em" Height="2em" /></a>
+            <a class="arrow"><Icon Type="arrow-right" Width="3em" Height="2em" /></a>
         </ActionColumn>
     </ColumnDefinitions>
 </Table>

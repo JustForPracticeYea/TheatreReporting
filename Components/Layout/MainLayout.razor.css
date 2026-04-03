@@ -14,10 +14,10 @@ main {
 .top-row {
     background-color: #463A3A;
     border-bottom: 1px solid #463A3A;
-    justify-content: flex-end;
     height: 3.5rem;
     display: flex;
     align-items: center;
+    justify-content: space-between;
 }
 
     .top-row ::deep a, .top-row ::deep .btn-link {

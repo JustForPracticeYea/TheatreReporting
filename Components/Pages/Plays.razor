@@ -1,0 +1,119 @@
+﻿@page "/plays"
+@rendermode InteractiveServer
+@using AntDesign.TableModels
+@using Microsoft.AspNetCore.Authorization
+@using TheatreReportingApp.Models
+@using Microsoft.EntityFrameworkCore
+@inject TheatreDbContext _context
+@attribute [Authorize]
+
+<PageHeader Class="site-page-header" Title="Список спектаклей" />
+<div class="controls-container">
+    <div class="search-string">
+        <Input Placeholder="Введите название спектакля" @bind-Value="@searchValue" @oninput="OnSearchInput" />
+        <Icon class="search-button" Type="search" />
+        <br />
+    </div>
+    <a class="add-button" href="/add-play">
+        <Icon Type="plus-square" Width="35px" Height="35px" />
+    </a>
+</div>
+
+<GridRow Gutter="(16, 24)">
+    @if (_playsDataSource == null || !_playsDataSource.Any())
+    {
+        <div class="no-data-message">Спектакли не найдены</div>
+    }
+    else
+    {
+        @foreach (var play in _playsDataSource)
+        {
+            <a class="nav-to-obj-play">
+                <NavLink href="@($"/performances/{play.PlayId}")">
+                    <GridCol>
+                        <Card Title="@play.Title">
+                            <Extra>
+                                <Icon class="move-forward-arrow" Type="arrow-right" Width="3em" Height="2em" />
+                            </Extra>
+                            <Body>
+                                <p>Количество спектаклей: @GetPerformanceCount(play.PlayId)</p>
+                            </Body>
+                        </Card>
+                    </GridCol>
+                </NavLink>
+            </a>
+        }
+    }
+</GridRow>
+
+<Pagination PageSize="@_pageSize"
+            Current="@_currentPage"
+            Total="@_totalCount"
+            OnChange="@OnPageChanged">
+</Pagination>
+
+@code {
+    private List<Play> _playsDataSource = new();
+    private List<Play> _allPlays = new();
+    private Dictionary<int, int> _performanceCounts = new();
+    private string searchValue { get; set; } = string.Empty;
+    private int _totalCount;
+    private int _pageSize = 24;
+    private int _currentPage = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetAllPlaysAsync();
+        await LoadPlays();
+    }
+
+    private async Task GetAllPlaysAsync()
+    {
+        _allPlays = await _context.Plays
+            .Include(p => p.PlayAuthors)
+            .ThenInclude(pa => pa.Authors)
+            .ToListAsync();
+
+        _performanceCounts = await _context.Performances
+            .GroupBy(p => p.PlayId)
+            .Select(g => new { PlayId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.PlayId, x => x.Count);
+    }
+
+    private int GetPerformanceCount(int playId)
+    {
+        return _performanceCounts.ContainsKey(playId) ? _performanceCounts[playId] : 0;
+    }
+
+    private async Task LoadPlays()
+    {
+        var query = _allPlays.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchValue))
+        {
+            query = query.Where(p => p.Title.Contains(searchValue, StringComparison.OrdinalIgnoreCase));
+        }
+       
+        _totalCount = query.Count();
+
+        _playsDataSource = query
+            .Skip(_pageSize * (_currentPage - 1))
+            .Take(_pageSize)
+            .ToList();
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        searchValue = e?.Value?.ToString() ?? string.Empty;
+        _currentPage = 1;
+        await LoadPlays();
+    }
+
+    private async Task OnPageChanged(PaginationEventArgs args)
+    {
+        _currentPage = args.Page;
+        await LoadPlays();
+    }
+}

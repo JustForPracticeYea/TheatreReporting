@@ -1,10 +1,12 @@
-﻿ <div class="menu">
-    <input type="checkbox" id="burger-checkbox" class="burger-checkbox">
-    <label for="burger-checkbox" class="burger"></label>
-    <ul class="menu-list">
-        <li><NavLink href="/" Match="NavLinkMatch.All"><span class="menu-item">Спектакли</span></NavLink></li>
-        <li><NavLink href="Report"><span class="menu-item">Отчёты</span></NavLink></li>
-        <li><NavLink href="Users"><span class="menu-item">Пользователи</span></NavLink></li>
-        <li><NavLink href="Authors"><span class="menu-item">Авторы</span></NavLink></li>
-    </ul>
-</div>
+﻿<AuthorizeView>
+    <div class="menu">
+        <input type="checkbox" id="burger-checkbox" class="burger-checkbox">
+        <label for="burger-checkbox" class="burger"></label>
+        <ul class="menu-list">
+            <li><NavLink href="Plays" Match="NavLinkMatch.All"><span class="menu-item">Спектакли</span></NavLink></li>
+            <li><NavLink href="Report"><span class="menu-item">Отчёты</span></NavLink></li>
+            <li><NavLink href="Users"><span class="menu-item">Пользователи</span></NavLink></li>
+            <li><NavLink href="Authors"><span class="menu-item">Авторы</span></NavLink></li>
+        </ul>
+    </div>
+</AuthorizeView>

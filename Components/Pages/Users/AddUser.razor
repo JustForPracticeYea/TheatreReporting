@@ -1,0 +1,130 @@
+﻿@page "/AddUSer"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using TheatreReportingApp.Models
+@using TheatreReportingApp.ViewModels
+@inject RoleManager<IdentityRole> RoleManager
+@inject UserManager<TheatreReportingApp.Models.Users> UserManager
+@inject NavigationManager Navigation
+@inject TheatreDbContext _context;
+@attribute [Authorize(Roles = "Admin")]
+
+<EditForm Model="@newUserModel" FormName="editUserForm" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+    @if (!string.IsNullOrEmpty(identityErrorsMessage))
+    {
+        <div class="alert alert-danger">@identityErrorsMessage</div>
+    }
+
+    <div class="form-group mb-3">
+        <label for="surname">Фамилия:</label>
+        <InputText id="surname" class="form-control" @bind-Value="newUserModel.Surname" />
+        <ValidationMessage For="@(() => newUserModel.Surname)" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="name">Имя:</label>
+        <InputText id="name" class="form-control" @bind-Value="newUserModel.Name" />
+        <ValidationMessage For="@(() => newUserModel.Name)" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="fathername">Отчество:</label>
+        <InputText id="fathername" class="form-control" @bind-Value="newUserModel.Fathername" />
+        <ValidationMessage For="@(() => newUserModel.Fathername)" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="email">Почта:</label>
+        <InputText id="email" class="form-control" @bind-Value="newUserModel.Email" />
+        <ValidationMessage For="@(() => newUserModel.Email)" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="role">Роль:</label>
+        <InputSelect id="role" class="form-control" @bind-Value="newUserModel.Rolename">
+            <option value="">Выберите роль</option>
+            @foreach (var role in rolesToChoose)
+            {
+                <option value="@role.Name">@role.Name</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => newUserModel.Rolename)" />
+    </div>
+
+
+    <div class="form-group mb-3">
+        <label for="password">Пароль:</label>
+        <InputText id="password" class="form-control" @bind-Value="newUserModel.Password" />
+        <ValidationMessage For="@(() => newUserModel.Password)" />
+    </div>
+
+
+    <div class="form-group mb-3">
+        <label for="confirmPassword">Подтверждение пароля:</label>
+        <InputText id="confirmPassword" class="form-control" @bind-Value="newUserModel.ConfirmPassword" />
+        <ValidationMessage For="@(() => newUserModel.ConfirmPassword)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+    <button type="button" class="btn btn-secondary ms-2" @onclick="Cancel">Отмена</button>
+</EditForm>
+
+
+@code {
+    private IEnumerable<IdentityError>? identityErrors;
+    private RegisterUserViewModel newUserModel = new RegisterUserViewModel();
+    private List<IdentityRole> rolesToChoose = new();
+    private string? identityErrorsMessage => identityErrors is null ? null : $"{string.Join("\n", identityErrors.Select(error => error.Description))}";
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        rolesToChoose = await RoleManager.Roles.ToListAsync();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        errorMessage = null;
+
+        var existingUser = await UserManager.FindByEmailAsync(newUserModel.Email);
+        if (existingUser != null)
+        {
+            errorMessage = "Пользователь с таким email уже существует";
+            return;
+        }
+        Models.Users user = new Models.Users
+        {
+            Surname = newUserModel.Surname,
+            Name = newUserModel.Name,
+            Fathername = newUserModel.Fathername,
+            Email = newUserModel.Email,
+            UserName = newUserModel.Email,
+        };
+
+        var result = await UserManager.CreateAsync(user, newUserModel.Password);
+
+        if (!result.Succeeded)
+        {
+            identityErrors = result.Errors;
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(newUserModel.Rolename))
+        {
+            await UserManager.AddToRoleAsync(user, newUserModel.Rolename);
+        }
+
+        Navigation.NavigateTo("/Users");
+        
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/Users");
+    }
+}

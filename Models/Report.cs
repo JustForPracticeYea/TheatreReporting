@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace TheaterReporting.Models
+namespace TheatreReportingApp.Models
 {
     public class Report
     {

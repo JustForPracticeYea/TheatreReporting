@@ -1,0 +1,93 @@
+﻿@page "/performances/{PlayId:int}"
+@rendermode InteractiveServer
+@using AntDesign.TableModels
+@using System.ComponentModel.DataAnnotations
+@using System.ComponentModel
+@using Microsoft.AspNetCore.Authorization
+@using TheatreReportingApp.Models
+@inject ModalService ModalService;
+@inject ConfirmService ComfirmService;
+@inject TheatreDbContext _context;
+@inject NavigationManager Navigation
+@attribute [Authorize]
+
+
+<PageHeader Class="site-page-header" Title="Проведенные спектакли" />
+<div class="controls-container">
+    <a @onclick="() => AddPerformance()" class="add-button">
+        <Icon Type="plus-square" Width="37px" Height="37px" />
+    </a>
+    <button class="reports-filter-button">
+        <Icon Type="filter" Width="37px" Height="37px" />
+    </button>
+</div>
+
+<Table @ref="_performanceTable" TItem="Performance" PageSize="10" Total="_performanceTotal" DataSource="_performanceDataSource" OnChange="OnPerformanceChange">
+    <PropertyColumn Property="p => p.PerformanceNumber"></PropertyColumn>
+    <PropertyColumn Property="p => p.Location"></PropertyColumn>
+    <PropertyColumn Property="p => p.EventDateTime"></PropertyColumn>
+    <ActionColumn>
+        <a @onclick="() => EditPerformance(context.PerformanceId)"><Icon Type="form" Height="2em" Width="2em" /></a>
+        <a><Icon Type="delete" Height="2em" Width="2em" /></a>
+    </ActionColumn>
+</Table>
+
+@code {
+    [Parameter]
+    public int PlayId { get; set; }
+
+    public ITable _performanceTable;
+
+    List<Performance> _performanceDataSource = new();
+    int _performanceTotal;
+    private QueryModel<Performance> _currentPerformanceQuery;
+
+    async Task OnPerformanceChange(QueryModel<Performance> query)
+    {
+        _currentPerformanceQuery = query;
+        await LoadPerformanceData(query);
+    }
+
+    private async Task<List<Performance>> GetAllPerformanceAsync()
+    {
+        var performances = await _context.Performances
+                                   .Include(p => p.Play)
+                                   .ThenInclude(p => p.PlayAuthors)
+                                   .ThenInclude(p => p.Authors)
+                                   .Where(p => p.PlayId == PlayId)
+                                   .ToListAsync();
+
+        return performances;
+    }
+
+    private async Task LoadPerformanceData(QueryModel<Performance> query = null)
+    {
+        var allPerformance = await GetAllPerformanceAsync();
+        _performanceTotal = allPerformance.Count;
+
+        if (query != null)
+        {
+            var queryable = allPerformance.AsQueryable();
+
+            _performanceDataSource = queryable
+                .Skip(query.PageSize * (query.PageIndex - 1))
+                .Take(query.PageSize)
+                .ToList();
+        }
+        else
+        {
+            _performanceDataSource = allPerformance.Take(10).ToList();
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void EditPerformance(int performanceId)
+    {
+        Navigation.NavigateTo($"/{performanceId}");
+    }
+    private void AddPerformance()
+    {
+        Navigation.NavigateTo($"{PlayId}/AddPerformance");
+    }
+}
