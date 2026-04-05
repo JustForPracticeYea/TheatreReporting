@@ -1,9 +1,159 @@
-﻿@page "/UserProfile"
+﻿@page "/UserProfile/{userId}"
+@rendermode InteractiveServer
 @using Microsoft.AspNetCore.Authorization
+@using TheatreReportingApp.DtoAndHelpers
+@inject UserManager<Models.Users> UserManager
 @attribute [Authorize]
 
-<h3>UserProfile</h3>
+<div class="user-profile-container">
+    <div class="row">
+        <div class="col-md-6">
+            <h3 class="mb-4">
+                <i class="bi bi-person-circle"></i> Профиль пользователя
+            </h3>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Личная информация</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-4">
+                            <div class="border rounded p-4 bg-light h-100">
+                                <small class="text-muted text-uppercase d-block mb-2" style="font-size: 0.75rem;">Фамилия</small>
+                                <span class="fw-semibold" style="font-size: 1.1rem;">@userDto.Surname</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="border rounded p-4 bg-light h-100">
+                                <small class="text-muted text-uppercase d-block mb-2" style="font-size: 0.75rem;">Имя</small>
+                                <span class="fw-semibold" style="font-size: 1.1rem;">@userDto.Name</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="border rounded p-4 bg-light h-100">
+                                <small class="text-muted text-uppercase d-block mb-2" style="font-size: 0.75rem;">Отчество</small>
+                                <span class="fw-semibold" style="font-size: 1.1rem;">@(string.IsNullOrEmpty(userDto.Fathername) ? "—" : userDto.Fathername)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4 g-4">
+                        <div class="col-md-6">
+                            <div class="border rounded p-4 bg-light">
+                                <small class="text-muted text-uppercase d-block mb-2" style="font-size: 0.75rem;">
+                                    <i class="bi bi-envelope"></i> Email
+                                </small>
+                                <span class="fw-semibold" style="font-size: 1.1rem;">@userDto.Email</span> 
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded p-4 bg-light">
+                                <small class="text-muted text-uppercase d-block mb-2" style="font-size: 0.75rem;">
+                                    <i class="bi bi-person-badge"></i> Роль
+                                </small>
+                                <span class="badge bg-primary" style="font-size: 1rem; padding: 6px 14px;">@userDto.Rolename</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button class="btn btn-outline-primary" @onclick="ToggleChangePassword" @onclick:preventDefault="true">
+                            <i class="bi bi-key"></i> Изменить пароль
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Правая часть - форма смены пароля -->
+        @if (showChangePassword)
+        {
+            <div class="col-md-5">
+                <div class="fade-in">
+                    <h3 class="mb-4">
+                        <i class="bi bi-shield-lock"></i> Смена пароля
+                    </h3>
+
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0">Изменение пароля</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-lock"></i> Текущий пароль
+                                </label>
+                                <input type="password"
+                                       class="form-control"
+                                       placeholder="Введите текущий пароль" />
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-key"></i> Новый пароль
+                                </label>
+                                <input type="password"
+                                       class="form-control"
+                                       placeholder="Введите новый пароль" />
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-check-circle"></i> Подтверждение пароля
+                                </label>
+                                <input type="password"
+                                       class="form-control"
+                                       placeholder="Повторите новый пароль" />
+                            </div>
+
+                            <div class="d-flex gap-4">
+                                <button class="btn btn-primary">
+                                    <i class="bi bi-save"></i> Сохранить пароль
+                                </button>
+                                <button class="btn btn-secondary">
+                                    <i class="bi bi-x-circle"></i> Отмена
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
 
 @code {
+    private bool showChangePassword = false;
+    [Parameter]
+    public string userId { get; set; }
+    private UserDto userDto;
 
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserInfo();
+    }
+
+    private async Task LoadUserInfo()
+    {
+        var user = await UserManager.FindByIdAsync(userId);
+        if(user != null)
+        {
+            var userRole = await UserManager.GetRolesAsync(user);
+            userDto = new UserDto
+            {
+                Id = user.Id,
+                Surname = user.Surname,
+                Name = user.Name,
+                Fathername = user.Fathername,
+                Email = user.Email,
+                Rolename = userRole.FirstOrDefault()
+            };
+        }
+    }
+    private void ToggleChangePassword()
+    {
+        showChangePassword = !showChangePassword;
+    }
 }

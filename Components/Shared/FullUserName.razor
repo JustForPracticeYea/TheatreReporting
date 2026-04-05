@@ -2,18 +2,20 @@
 @using System.Security.Claims
 @using TheatreReportingApp.Models
 @inject TheatreDbContext _context
+@inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthProvider
 @attribute [Authorize]
 
-<NavLink href="UserProfile">@FullName</NavLink>
+<NavLink href="@($"UserProfile/{userId}")">@FullName</NavLink>
 
 @code {
     private string FullName = "Загрузка...";
+    private string userId;
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthProvider.GetAuthenticationStateAsync();
-        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (!string.IsNullOrEmpty(userId))
         {

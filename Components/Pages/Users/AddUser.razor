@@ -2,14 +2,14 @@
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Authorization
 @using TheatreReportingApp.Models
-@using TheatreReportingApp.ViewModels
+@using TheatreReportingApp.DtoAndHelpers
 @inject RoleManager<IdentityRole> RoleManager
 @inject UserManager<TheatreReportingApp.Models.Users> UserManager
 @inject NavigationManager Navigation
 @inject TheatreDbContext _context;
 @attribute [Authorize(Roles = "Admin")]
 
-<EditForm Model="@newUserModel" FormName="editUserForm" OnValidSubmit="@HandleValidSubmit">
+<EditForm Model="@newUserModel" FormName="editUserForm" OnValidSubmit="@CreateNewUser">
     <DataAnnotationsValidator />
     @if (!string.IsNullOrEmpty(errorMessage))
     {
@@ -77,7 +77,7 @@
 
 @code {
     private IEnumerable<IdentityError>? identityErrors;
-    private RegisterUserViewModel newUserModel = new RegisterUserViewModel();
+    private RegisterUserDto newUserModel = new RegisterUserDto();
     private List<IdentityRole> rolesToChoose = new();
     private string? identityErrorsMessage => identityErrors is null ? null : $"{string.Join("\n", identityErrors.Select(error => error.Description))}";
     private string? errorMessage;
@@ -87,7 +87,7 @@
         rolesToChoose = await RoleManager.Roles.ToListAsync();
     }
 
-    private async Task HandleValidSubmit()
+    private async Task CreateNewUser()
     {
         errorMessage = null;
 

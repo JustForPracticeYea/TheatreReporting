@@ -1,8 +1,421 @@
 ﻿@page "/{PlayId:int}/AddPerformance"
-<h3>AddPerformance</h3>
-<p>@PlayId</p>
+@rendermode InteractiveServer
+@using System.Globalization
+@using TheatreReportingApp.DtoAndHelpers
+@using TheatreReportingApp.Models
+@inject TheatreDbContext _context
+@inject NavigationManager Navigation
+
+<h3 class="text-center">Добавление спектакля</h3>
+<div class="form-container">
+    <div class="form-wrapper">
+        <EditForm Model="@performance" OnValidSubmit="@CreateNewPerformance">
+            <DataAnnotationsValidator />
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="PerformanceNumber">Номер спектакля</label>
+                        <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.PerformanceNumber" />
+                        <ValidationMessage For="@(() => performance.PerformanceNumber)" />
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group mb-0">
+                        <label for="Location">Место проведения</label>
+                        <InputSelect class="location-form-control w-50" @bind-Value="performance.Location">
+                                    <option value="">Выберите место проведения</option>
+                                    <option value="Большая сцена">Большая сцена</option>
+                                    <option value="Малая сцена">Малая сцена</option>
+                                    <option value="Другие места">Другие места</option>
+                        </InputSelect>
+                        <ValidationMessage For="@(() => performance.Location)" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label>Дата проведения спектакля</label>
+                        <AntDesign.DatePicker class="form-control w-50"
+                                              DefaultValue="DateTime.Now"
+                                              CultureInfo="@CultureInfo.GetCultureInfo("ru-Ru")" 
+                                              @bind-Value="performance.SelectedDate"/>
+                        <ValidationMessage For="@(() => performance.SelectedDate)" />
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label>Время проведения спектакля</label>
+                        <TimePicker class="form-control w-50"
+                                    TValue="DateTime?"
+                                    Picker="DatePickerType.Time"
+                                    Format="HH:mm"
+                                    CultureInfo="@CultureInfo.GetCultureInfo("ru-Ru")"
+                                    @bind-Value="selectedTime"
+                                    OnValueChanged="@OnTimeChanged" />
+                        <ValidationMessage For="@(() => performance.SelectedTime)" />
+                    </div>
+                 </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header bg-card-header">
+                    <h5 class="mb-0 text-white">Продажа билетов на кассе</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Количество билетов (наличные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.NumTickCashOffice" />
+                                <ValidationMessage For="@(() => performance.NumTickCashOffice)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Сумма (наличные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.AmountTickCashOffice" />
+                                <ValidationMessage For="@(() => performance.AmountTickCashOffice)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Количество билетов (безналичные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.NumTickNonCashOffice" />
+                                <ValidationMessage For="@(() => performance.NumTickNonCashOffice)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Сумма (безналичные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.AmountTickNonCashOffice" />
+                                <ValidationMessage For="@(() => performance.AmountTickNonCashOffice)" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header bg-card-header">
+                    <h5 class="mb-0 text-white">Продажа билетов через интернет</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Количество билетов (наличные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.NumTickCashOnline" />
+                                <ValidationMessage For="@(() => performance.NumTickCashOnline)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Сумма (наличные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.AmountTickCashOnline" />
+                                <ValidationMessage For="@(() => performance.AmountTickCashOnline)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Количество билетов (безналичные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.NumTickNonCashOnline" />
+                                <ValidationMessage For="@(() => performance.NumTickNonCashOnline)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Сумма (безналичные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.AmountTickNonCashOnline" />
+                                <ValidationMessage For="@(() => performance.AmountTickNonCashOnline)" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                        <div class="card-header bg-card-header">
+                    <h5 class="mb-0 text-white">Возвраты билетов</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Количество возвратов (касса/наличные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.NumTickRetCashOffice" />
+                                <ValidationMessage For="@(() => performance.NumTickRetCashOffice)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Сумма возврата (касса/наличные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.AmountFundsRetCashOffice" />
+                                <ValidationMessage For="@(() => performance.AmountFundsRetCashOffice)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Количество возвратов (касса/безналичные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.NumTickRetNonCashOffice" />
+                                <ValidationMessage For="@(() => performance.NumTickRetNonCashOffice)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Сумма возврата (касса/безналичные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.AmountFundsRetNonCashOffice" />
+                                <ValidationMessage For="@(() => performance.AmountFundsRetNonCashOffice)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Количество возвратов (интернет/наличные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.NumTickRetCashOnline" />
+                                <ValidationMessage For="@(() => performance.NumTickRetCashOnline)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Сумма возврата (интернет/наличные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.AmountFundsRetCashOnline" />
+                                <ValidationMessage For="@(() => performance.AmountFundsRetCashOnline)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Количество возвратов (интернет/безналичные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.NumTickRetNonCashOnline" />
+                                <ValidationMessage For="@(() => performance.NumTickRetNonCashOnline)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Сумма возврата (интернет/безналичные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.AmountFundsRetNonCashOline" />
+                                <ValidationMessage For="@(() => performance.AmountFundsRetNonCashOline)" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Итоговые суммы (реализованные билеты) -->
+            <div class="card mb-3">
+                <div class="card-header bg-card-header">
+                    <h5 class="mb-0 text-white">Реализованные билеты (касса/интернет)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Кол-во билетов (касса/наличные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.NumTickSoldCashOffice" />
+                                <ValidationMessage For="@(() => performance.NumTickSoldCashOffice)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Сумма (касса/наличные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.AmountTickSoldCashOffice" />
+                                <ValidationMessage For="@(() => performance.AmountTickSoldCashOffice)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Кол-во билетов (касса/безналичные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.NumTickSoldNonCashOffice" />
+                                <ValidationMessage For="@(() => performance.NumTickSoldNonCashOffice)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Сумма (касса/безналичные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.AmountTickSoldNonCashOffice" />
+                                <ValidationMessage For="@(() => performance.AmountTickSoldNonCashOffice)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Кол-во билетов (интернет/наличные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.NumTickSoldCashOnline" />
+                                <ValidationMessage For="@(() => performance.NumTickSoldCashOnline)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Сумма (интернет/наличные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.AmountTickSoldCashOnline" />
+                                <ValidationMessage For="@(() => performance.AmountTickSoldCashOnline)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Кол-во билетов (интернет/безналичные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.NumTickSoldNonCashOnline" />
+                                <ValidationMessage For="@(() => performance.NumTickSoldNonCashOnline)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Сумма (интернет/безналичные)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.AmountTickSoldNonCashOnline" />
+                                <ValidationMessage For="@(() => performance.AmountTickSoldNonCashOnline)" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header bg-card-header">
+                    <h5 class="mb-0 text-white">Итоговые суммы</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Итого билетов (касса)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.TotalNumTickSoldInOffice" />
+                                <ValidationMessage For="@(() => performance.TotalNumTickSoldInOffice)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Итого сумма (касса)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.TotalAmountTickSoldInOffice" />
+                                <ValidationMessage For="@(() => performance.TotalAmountTickSoldInOffice)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Итого билетов (интернет)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.TotalNumTickSoldOnline" />
+                                <ValidationMessage For="@(() => performance.TotalNumTickSoldOnline)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Итого сумма (интернет)</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.TotalAmountTickSoldOnline" />
+                                <ValidationMessage For="@(() => performance.TotalAmountTickSoldOnline)" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label>Реально полученная сумма (касса)</label>
+                        <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.RealAmountTickSoldInOffice" />
+                        <ValidationMessage For="@(() => performance.RealAmountTickSoldInOffice)" />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label>Реально полученная сумма (интернет)</label>
+                        <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.RealAmountTickSoldInOnline" />
+                        <ValidationMessage For="@(() => performance.RealAmountTickSoldInOnline)" />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label>Количество зрителей (бесплатно)</label>
+                        <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.NumViewrsServedFree" />
+                        <ValidationMessage For="@(() => performance.NumViewrsServedFree)" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group mt-3">
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+                <a href="/performances" class="btn btn-secondary ms-2" @onclick="Cancel">Отмена</a>
+            </div>
+        </EditForm>
+    </div>
+</div>
 
 @code {
     [Parameter]
     public int PlayId { get; set; }
+    private PerformanceDto performance = new PerformanceDto();
+    private DateTime? selectedTime;
+
+    private void OnTimeChanged(DateTime? dateTime)
+    {
+        if (dateTime.HasValue)
+        {
+            performance.SelectedTime = dateTime.Value.TimeOfDay;
+            StateHasChanged();
+        }
+    }
+
+
+    private async Task CreateNewPerformance()
+    {
+        var eventDateTime = performance.SelectedDate.Date;
+
+        if (selectedTime.HasValue)
+        {
+            eventDateTime = eventDateTime.Add(selectedTime.Value.TimeOfDay);
+        }
+        else
+        {
+            eventDateTime = eventDateTime.Add(DateTime.Now.TimeOfDay);
+        }
+        var newPerformance = new Performance
+        {
+            PerformanceNumber = performance.PerformanceNumber,
+            Location = performance.Location,
+            EventDateTime = eventDateTime,
+            NumTickCashOffice = performance.NumTickCashOffice,
+            NumTickNonCashOffice = performance.NumTickNonCashOffice,
+            NumTickCashOnline = performance.NumTickCashOnline,
+            NumTickNonCashOnline = performance.NumTickNonCashOnline,
+            NumTickRetCashOffice = performance.NumTickRetCashOffice,
+            NumTickRetNonCashOffice = performance.NumTickRetNonCashOffice,
+            NumTickRetCashOnline = performance.NumTickRetCashOnline,
+            NumTickRetNonCashOnline = performance.NumTickRetNonCashOnline,
+            AmountTickCashOffice = performance.AmountTickCashOffice,
+            AmountTickNonCashOffice = performance.AmountTickNonCashOffice,
+            AmountTickCashOnline = performance.AmountTickCashOnline,
+            AmountTickNonCashOnline = performance.AmountTickNonCashOnline,
+            AmountFundsRetCashOffice = performance.AmountFundsRetCashOffice,
+            AmountFundsRetNonCashOffice = performance.AmountFundsRetNonCashOffice,
+            AmountFundsRetCashOnline = performance.AmountFundsRetCashOnline,
+            AmountFundsRetNonCashOline = performance.AmountFundsRetNonCashOline,
+            NumTickSoldCashOffice = performance.NumTickSoldCashOffice,
+            AmountTickSoldCashOffice = performance.AmountTickSoldCashOffice,
+            NumTickSoldNonCashOffice = performance.NumTickSoldNonCashOffice,
+            AmountTickSoldNonCashOffice = performance.AmountTickSoldNonCashOffice,
+            NumTickSoldCashOnline = performance.NumTickSoldCashOnline,
+            AmountTickSoldCashOnline = performance.AmountTickSoldCashOnline,
+            NumTickSoldNonCashOnline = performance.NumTickSoldNonCashOnline,
+            AmountTickSoldNonCashOnline = performance.AmountTickSoldNonCashOnline,
+            TotalNumTickSoldInOffice = performance.TotalNumTickSoldInOffice,
+            TotalAmountTickSoldInOffice = performance.TotalAmountTickSoldInOffice,
+            TotalNumTickSoldOnline = performance.TotalNumTickSoldOnline,
+            TotalAmountTickSoldOnline = performance.TotalAmountTickSoldOnline,
+            RealAmountTickSoldInOffice = performance.RealAmountTickSoldInOffice,
+            RealAmountTickSoldInOnline = performance.RealAmountTickSoldInOnline,
+            NumViewrsServedFree = performance.NumViewrsServedFree,
+            PlayId = PlayId
+        };
+
+        _context.Performances.Add(newPerformance);
+        await _context.SaveChangesAsync();
+
+        Navigation.NavigateTo($"/performances/{PlayId}");
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo($"/performances/{PlayId}");
+    }
 }

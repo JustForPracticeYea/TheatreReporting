@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace TheatreReportingApp.ViewModels
+namespace TheatreReportingApp.DtoAndHelpers
 {
     public class UserDto
     {

@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace TheatreReportingApp.ViewModels
+namespace TheatreReportingApp.DtoAndHelpers
 {
-    public class RegisterUserViewModel
+    public class RegisterUserDto
     {
         [Required(ErrorMessage = "Email обязателен")]
         [EmailAddress(ErrorMessage = "Неверный формат email")]

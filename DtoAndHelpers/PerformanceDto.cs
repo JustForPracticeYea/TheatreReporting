@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using TheatreReportingApp.Models;
 
-namespace TheatreReportingApp.Models
+namespace TheatreReportingApp.DtoAndHelpers
 {
-    public class Performance
+    public class PerformanceDto
     {
-        [Key]
         public int PerformanceId { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
@@ -17,7 +17,12 @@ namespace TheatreReportingApp.Models
         public string Location { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
-        [Display(Name = "Дата проведения спектакля")]
+        [Display(Name = "Дата проведения")]
+        public DateTime SelectedDate { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Время проведения")]
+        public TimeSpan SelectedTime { get; set; }
         public DateTime EventDateTime { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]

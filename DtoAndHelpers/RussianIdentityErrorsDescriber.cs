@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace TheatreReportingApp.ViewModels
+namespace TheatreReportingApp.DtoAndHelpers
 {
     public class RussianIdentityErrorsDescriber:IdentityErrorDescriber
     {

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using TheatreReportingApp.Components;
 using TheatreReportingApp.Models;
-using TheatreReportingApp.ViewModels;
+using TheatreReportingApp.DtoAndHelpers;
 
 var builder = WebApplication.CreateBuilder(args);
 

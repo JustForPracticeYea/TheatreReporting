@@ -4,6 +4,7 @@
 @using System.ComponentModel.DataAnnotations
 @using System.ComponentModel
 @using Microsoft.AspNetCore.Authorization
+@using System.Globalization
 @using TheatreReportingApp.Models
 @inject ModalService ModalService;
 @inject ConfirmService ComfirmService;
@@ -14,18 +15,26 @@
 
 <PageHeader Class="site-page-header" Title="Проведенные спектакли" />
 <div class="controls-container">
-    <a @onclick="() => AddPerformance()" class="add-button">
-        <Icon Type="plus-square" Width="37px" Height="37px" />
+    <a @onclick="() => GoBack()" class="back-button">
+        <Icon Type="arrow-left" Width="37px" Height="37px" />
     </a>
-    <button class="reports-filter-button">
-        <Icon Type="filter" Width="37px" Height="37px" />
-    </button>
+
+    <div class="d-flex align-items-center gap-2 center-controls">
+        <DatePicker TValue="DateTime?"
+                    CultureInfo="@CultureInfo.GetCultureInfo("ru-Ru")"
+                    class="date-filter" />
+        <a @onclick="() => AddPerformance()" class="add-button">
+            <Icon Type="plus-square" Width="37px" Height="37px" />
+        </a>
+    </div>
+
+    <div style="width: 37px;"></div> <!-- Заглушка для баланса -->
 </div>
 
 <Table @ref="_performanceTable" TItem="Performance" PageSize="10" Total="_performanceTotal" DataSource="_performanceDataSource" OnChange="OnPerformanceChange">
     <PropertyColumn Property="p => p.PerformanceNumber"></PropertyColumn>
     <PropertyColumn Property="p => p.Location"></PropertyColumn>
-    <PropertyColumn Property="p => p.EventDateTime"></PropertyColumn>
+    <PropertyColumn Property="p => p.EventDateTime" Format="dd-MM-yyyy"></PropertyColumn>
     <ActionColumn>
         <a @onclick="() => EditPerformance(context.PerformanceId)"><Icon Type="form" Height="2em" Width="2em" /></a>
         <a><Icon Type="delete" Height="2em" Width="2em" /></a>
@@ -89,5 +98,9 @@
     private void AddPerformance()
     {
         Navigation.NavigateTo($"{PlayId}/AddPerformance");
+    }
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/Plays");
     }
 }
