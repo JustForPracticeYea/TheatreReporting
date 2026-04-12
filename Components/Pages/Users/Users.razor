@@ -7,10 +7,9 @@
 @using TheatreReportingApp.Models
 @using TheatreReportingApp.DtoAndHelpers
 @inject ModalService ModalService;
-@inject ConfirmService ComfirmService;
 @inject TheatreDbContext _context;
 @inject NavigationManager Navigation
-@attribute [Authorize(Roles = "Admin")]
+@attribute [Authorize(Roles = "Директор")]
 
 <div class="controls-container">
     <PageHeader Class="site-page-header" Title="Список пользователей" />
@@ -33,7 +32,13 @@
     <PropertyColumn Property="u => u.Rolename"></PropertyColumn>
     <ActionColumn>
         <a @onclick="() => EditUser(context.Id)"><Icon Type="form" Height="2em" Width="2em" /></a>
-        <a><Icon Type="delete" Height="2em" Width="2em" /></a>
+        <Popconfirm Title="Вы уверены что хотите удалить данного пользователя?" 
+                    CancelText="Отмена"
+                    OkText="Да"
+                    Style="cursor:pointer"
+                    OnConfirm="() => DeleteUser(context.Id,context.Email)">
+            <Icon Type="delete" Height="2em" Width="2em" />
+        </Popconfirm>
     </ActionColumn>
 </Table>
     
@@ -62,7 +67,9 @@
                 Name = a.u.Name,
                 Fathername = a.u.Fathername,
                 Rolename = rt.Name
-            }).ToListAsync();
+            })
+            .Where(rt => rt.Rolename != "Директор")
+            .ToListAsync();
 
         for (int i = 0; i < users.Count; i++)
         {
@@ -119,6 +126,17 @@
     private void AddUser()
     {
         Navigation.NavigateTo("AddUser");
+    }
+
+    private async Task DeleteUser(string userId, string userName)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user != null)
+        {
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            await LoadUsersData(_currentUsersQuery);
+        }
     }
     // private async Task SearchUsers()
     // {

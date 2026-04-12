@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 namespace TheatreReportingApp.Models
 {
     public class AuthorJob
@@ -6,6 +7,7 @@ namespace TheatreReportingApp.Models
         [Key]
         public int AuthorJobId {  get; set; }
 
+        [DisplayName("Работа автора")]
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
         [MinLength(3, ErrorMessage = "Минимум 3 символа")]
         [MaxLength(100, ErrorMessage = "Максимум 100 символов")]

@@ -1,0 +1,82 @@
+﻿@page "/AddAuthor"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
+@using TheatreReportingApp.DtoAndHelpers
+@using TheatreReportingApp.Models
+@inject NavigationManager Navigation
+@inject TheatreDbContext _context;
+@attribute [Authorize]
+
+<EditForm Model="@authorDto" FormName="addAuthorForm" OnValidSubmit="@CreateNewAuthor">
+    <DataAnnotationsValidator />
+
+    <div class="form-group mb-3">
+        <label for="surname">Фамилия:</label>
+        <InputText id="surname" class="form-control" @bind-Value="authorDto.AuthorSurname" />
+        <ValidationMessage For="@(() => authorDto.AuthorSurname)" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="name">Имя:</label>
+        <InputText id="name" class="form-control" @bind-Value="authorDto.AuthorName" />
+        <ValidationMessage For="@(() => authorDto.AuthorName)" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="fathername">Отчество:</label>
+        <InputText id="fathername" class="form-control" @bind-Value="authorDto.AuthorFathername" />
+        <ValidationMessage For="@(() => authorDto.AuthorFathername)" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="work">Выберите работу автора:</label>
+        <InputSelect id="work" class="form-control" @bind-Value="authorDto.SelectedJobId">
+            <option value="">Выберите работу автора</option>
+            @foreach (var work in worksToChoose)
+            {
+                <option value="@work.AuthorJobId">@work.Title</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => authorDto.SelectedJobId)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+    <button type="button" class="btn btn-secondary ms-2" @onclick="Cancel">Отмена</button>
+</EditForm>
+
+@code {
+    private List<AuthorJob> worksToChoose = new();
+    private AuthorsDto authorDto = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        worksToChoose = await _context.AuthorJobs.ToListAsync();
+    }
+
+    private async Task CreateNewAuthor()
+    {
+        if (authorDto.SelectedJobId == null || authorDto.SelectedJobId == 0)
+        {
+            return;
+        }
+
+        Models.Authors newAuthor = new Models.Authors
+        {
+            AuthorSurname = authorDto.AuthorSurname,
+            AuthorName = authorDto.AuthorName,
+            AuthorFathername = authorDto.AuthorFathername,
+            AuthorJobId = authorDto.SelectedJobId.Value
+        };
+
+        _context.Authors.Add(newAuthor);
+        await _context.SaveChangesAsync();
+
+        Navigation.NavigateTo("/Authors");
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/Authors");
+    }
+}

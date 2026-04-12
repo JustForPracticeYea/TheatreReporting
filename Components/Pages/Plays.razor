@@ -1,4 +1,5 @@
-﻿@page "/plays"
+﻿@page "/"
+@page "/plays"
 @rendermode InteractiveServer
 @using AntDesign.TableModels
 @using Microsoft.AspNetCore.Authorization
@@ -14,7 +15,7 @@
         <Icon class="search-button" Type="search" />
         <br />
     </div>
-    <a class="add-button" href="/add-play">
+    <a class="add-button" @onclick="() => AddRole()">
         <Icon Type="plus-square" Width="35px" Height="35px" />
     </a>
 </div>
@@ -52,6 +53,21 @@
             OnChange="@OnPageChanged">
 </Pagination>
 
+<Modal Title="@("Добавление названия спектакля")"
+       Visible="@_isModalVisible"
+       OnOk="@HandleSavePlay"
+       OnCancel="@HandleCancel"
+       ConfirmLoading="@_isSubmitting">
+    <div style="padding: 20px;">
+        <div class="form-group">
+            <label for="playName">Название спектакля:</label>
+            <Input @bind-Value="@playName"
+                   id="playName"
+                   Placeholder="Введите название спектакля" />
+        </div>
+    </div>
+</Modal>
+
 @code {
     private List<Play> _playsDataSource = new();
     private List<Play> _allPlays = new();
@@ -60,6 +76,10 @@
     private int _totalCount;
     private int _pageSize = 24;
     private int _currentPage = 1;
+
+    private bool _isModalVisible = false;
+    private bool _isSubmitting = false;
+    private string playName = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -93,7 +113,7 @@
         {
             query = query.Where(p => p.Title.Contains(searchValue, StringComparison.OrdinalIgnoreCase));
         }
-       
+
         _totalCount = query.Count();
 
         _playsDataSource = query
@@ -115,5 +135,40 @@
     {
         _currentPage = args.Page;
         await LoadPlays();
+    }
+
+    private void AddRole()
+    {
+        _isModalVisible = true;
+    }
+
+    private async Task HandleSavePlay()
+    {
+        if (string.IsNullOrWhiteSpace(playName))
+        {
+            return;
+        }
+
+        _isSubmitting = true;
+
+        var newPlay = new Play
+        {
+            Title = playName
+        };
+
+        _context.Plays.Add(newPlay);
+        await _context.SaveChangesAsync();
+
+        _isSubmitting = false;
+
+        _isModalVisible = false;
+        await GetAllPlaysAsync();
+        await LoadPlays();
+    }
+
+    private void HandleCancel()
+    {
+        _isModalVisible = false;
+        playName = "";
     }
 }

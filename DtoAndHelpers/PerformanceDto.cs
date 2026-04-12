@@ -22,7 +22,7 @@ namespace TheatreReportingApp.DtoAndHelpers
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
         [Display(Name = "Время проведения")]
-        public TimeSpan SelectedTime { get; set; }
+        public DateTime? SelectedTime { get; set; }
         public DateTime EventDateTime { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]

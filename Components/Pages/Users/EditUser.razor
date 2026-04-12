@@ -7,9 +7,9 @@
 @inject UserManager<TheatreReportingApp.Models.Users> UserManager
 @inject NavigationManager Navigation
 @inject TheatreDbContext _context;
-@attribute [Authorize(Roles = "Admin")]
+@attribute [Authorize(Roles = "Директор")]
 
-<EditForm Model="@userDto" FormName="editUserForm" OnValidSubmit="@HandleValidSubmit">
+<EditForm Model="@userDto" FormName="editUserForm" OnValidSubmit="@EditThisUser">
 
     <div class="form-group mb-3">
         <label for="surname">Фамилия:</label>
@@ -80,7 +80,7 @@
         rolesToChoose = await RoleManager.Roles.ToListAsync();
     }
 
-    private async Task HandleValidSubmit()
+    private async Task EditThisUser()
     {
         var user = await UserManager.FindByIdAsync(Id);
 

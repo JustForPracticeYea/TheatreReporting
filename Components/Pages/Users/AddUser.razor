@@ -1,4 +1,4 @@
-﻿@page "/AddUSer"
+﻿@page "/AddUser"
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Authorization
 @using TheatreReportingApp.Models
@@ -7,9 +7,9 @@
 @inject UserManager<TheatreReportingApp.Models.Users> UserManager
 @inject NavigationManager Navigation
 @inject TheatreDbContext _context;
-@attribute [Authorize(Roles = "Admin")]
+@attribute [Authorize(Roles = "Директор")]
 
-<EditForm Model="@newUserModel" FormName="editUserForm" OnValidSubmit="@CreateNewUser">
+<EditForm Model="@newUserModel" FormName="addUserForm" OnValidSubmit="@CreateNewUser">
     <DataAnnotationsValidator />
     @if (!string.IsNullOrEmpty(errorMessage))
     {
@@ -59,14 +59,14 @@
 
     <div class="form-group mb-3">
         <label for="password">Пароль:</label>
-        <InputText id="password" class="form-control" @bind-Value="newUserModel.Password" />
+        <InputPassword id="password" class="form-control" @bind-Value="newUserModel.Password" />
         <ValidationMessage For="@(() => newUserModel.Password)" />
     </div>
 
 
     <div class="form-group mb-3">
         <label for="confirmPassword">Подтверждение пароля:</label>
-        <InputText id="confirmPassword" class="form-control" @bind-Value="newUserModel.ConfirmPassword" />
+        <InputPassword id="confirmPassword" class="form-control" @bind-Value="newUserModel.ConfirmPassword" />
         <ValidationMessage For="@(() => newUserModel.ConfirmPassword)" />
     </div>
 

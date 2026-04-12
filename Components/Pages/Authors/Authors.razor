@@ -1,0 +1,103 @@
+﻿@page "/authors"
+@rendermode InteractiveServer
+@using AntDesign.TableModels
+@using System.ComponentModel.DataAnnotations
+@using System.ComponentModel
+@using Microsoft.AspNetCore.Authorization
+@using TheatreReportingApp.Models
+@inject TheatreDbContext _context;
+@inject NavigationManager Navigation
+@attribute [Authorize]
+
+
+<PageHeader Class="site-page-header" Title="Список авторов" />
+<div class="controls-container">
+    <div class="search-string">
+        <Input Placeholder="Введите ФИО" @bind-Value="searchValue" @oninput="OnSearchInput" />
+        <button class="search-button">
+            <Icon Type="search" />
+        </button>
+        <br />
+    </div>
+    <a @onclick="() => AddAuthor()" class="add-button">
+        <Icon Type="plus-square" Width="37px" Height="37px" />
+    </a>
+</div>
+
+<Table @ref="_authorTable" TItem="Models.Authors" PageSize="10" Total="_authorsTotal" DataSource="_authorDataSource" OnChange="OnAuthorsChange">
+    <PropertyColumn Property="p => p.AuthorSurname"></PropertyColumn>
+    <PropertyColumn Property="p => p.AuthorName"></PropertyColumn>
+    <PropertyColumn Property="p => p.AuthorFathername"></PropertyColumn>
+    <PropertyColumn Property="p => p.AuthorJob.Title"></PropertyColumn>
+    <ActionColumn>
+        <a @onclick="() => EditAuthor(context.AuthorId)"><Icon Type="form" Height="2em" Width="2em" /></a>
+        <a><Icon Type="delete" Height="2em" Width="2em" /></a>
+    </ActionColumn>
+</Table>
+
+@code {
+
+    public ITable _authorTable;
+
+    List<Models.Authors> _authorDataSource = new();
+    int _authorsTotal;
+    private QueryModel<Models.Authors> _currentAuthorsQuery;
+    private string searchValue { get; set; } = string.Empty;
+
+    async Task OnAuthorsChange(QueryModel<Models.Authors> query)
+    {
+        _currentAuthorsQuery = query;
+        await LoadAuthorsData(query);
+    }
+
+    private async Task<List<Models.Authors>> GetAllAuthorsAsync()
+    {
+        var authors = await _context.Authors
+                                         .Include(a => a.AuthorJob)
+                                         .ToListAsync();
+        if (!string.IsNullOrWhiteSpace(searchValue))
+        {
+            authors = authors.Where(a =>
+                (a.AuthorSurname + " " + a.AuthorName + " " + a.AuthorFathername)
+                .Contains(searchValue, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+        return authors;
+    }
+
+    private async Task LoadAuthorsData(QueryModel<Models.Authors> query = null)
+    {
+        var allAuthors = await GetAllAuthorsAsync();
+        _authorsTotal = allAuthors.Count;
+
+        if (query != null)
+        {
+            var queryable = allAuthors.AsQueryable();
+
+            _authorDataSource = queryable
+                .Skip(query.PageSize * (query.PageIndex - 1))
+                .Take(query.PageSize)
+                .ToList();
+        }
+        else
+        {
+            _authorDataSource = allAuthors.Take(10).ToList();
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void EditAuthor(int authorId)
+    {
+        Navigation.NavigateTo($"/EditAuthor/{authorId}");
+    }
+    private void AddAuthor()
+    {
+        Navigation.NavigateTo($"/AddAuthor");
+    }
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        searchValue = e?.Value?.ToString() ?? string.Empty;
+        await LoadAuthorsData();
+    }
+}

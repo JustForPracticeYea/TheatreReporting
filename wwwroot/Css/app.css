@@ -382,3 +382,6 @@ h1:focus {
     margin-right: 5rem;
     margin-left: 5rem;
 }
+.hide-timepicker-footer .ant-picker-footer {
+    display: none;
+}

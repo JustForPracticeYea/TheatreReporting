@@ -1,0 +1,204 @@
+﻿@page "/roles"
+@rendermode InteractiveServer
+@using System.ComponentModel
+@using System.ComponentModel.DataAnnotations
+@using AntDesign.TableModels
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using TheatreReportingApp.Models
+@using TheatreReportingApp.DtoAndHelpers
+@inject ModalService ModalService;
+@inject RoleManager<IdentityRole> RoleManager
+@inject ConfirmService ComfirmService;
+@inject NavigationManager Navigation
+@attribute [Authorize(Roles = "Директор")]
+
+<div class="controls-container">
+    <PageHeader Class="site-page-header" Title="Список ролей пользователей" />
+    <Button class="add-button" Onclick="AddRole">
+        <Icon Type="plus-square" Width="37px" Height="37px" />
+    </Button>
+</div>
+
+<Table @ref="_rolesTable" TItem="IdentityRole" PageSize="10" Total="_rolesTotal" DataSource="_rolesDataSource" OnChange="OnRolesChange">
+    <Column TData="string" Title="Номер записи" Width="auto">
+        <Template>
+            @{
+                var index = _rolesDataSource.IndexOf(context) + 1;
+                if (_currentRolesQuery != null)
+                {
+                    index = (_currentRolesQuery.PageIndex - 1) * _currentRolesQuery.PageSize + index;
+                }
+                <span>@index</span>
+            }
+        </Template>
+    </Column>
+    <PropertyColumn Property="u => u.Name" Title="Название роли"></PropertyColumn>
+    <ActionColumn>
+        <a @onclick="() => EditRole(context)"><Icon Type="form" Height="2em" Width="2em" /></a>
+        <a @onclick="() => DeleteRole(context.Id, context.Name)"><Icon Type="delete" Height="2em" Width="2em" /></a>
+    </ActionColumn>
+</Table>
+
+<Modal Title="@(_isEditMode ? "Редактирование роли" : "Добавление роли")"
+       Visible="@_isModalVisible"
+       OnOk="@HandleSaveRole"
+       OnCancel="@HandleCancel"
+       ConfirmLoading="@_isSubmitting">
+    <div style="padding: 20px;">
+        <div class="form-group">
+            <label for="roleName">Название роли:</label>
+            <Input @bind-Value="@_roleName"
+                   id="roleName"
+                   Placeholder="Введите название роли" />
+        </div>
+    </div>
+</Modal>
+
+@code {
+    public ITable _rolesTable;
+
+    private bool _isModalVisible = false;
+    private bool _isSubmitting = false;
+    private bool _isEditMode = false;
+    private string _roleName = "";
+    private string _editingRoleId = "";
+
+    List<IdentityRole> _rolesDataSource = new();
+    int _rolesTotal;
+    private string _usersSearchString = "";
+    private QueryModel<IdentityRole> _currentRolesQuery;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRolesData();
+    }
+
+    async Task OnRolesChange(QueryModel<IdentityRole> query)
+    {
+        _currentRolesQuery = query;
+        await LoadRolesData(query);
+    }
+
+    private async Task LoadRolesData(QueryModel<IdentityRole> query = null)
+    {
+        var allRoles = await RoleManager.Roles.ToListAsync();
+        _rolesTotal = allRoles.Count;
+
+        if (query != null)
+        {
+            var queryable = allRoles.AsQueryable();
+
+            _rolesDataSource = queryable
+                .Skip(query.PageSize * (query.PageIndex - 1))
+                .Take(query.PageSize)
+                .ToList();
+        }
+        else
+        {
+            _rolesDataSource = allRoles.Take(10).ToList();
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task DeleteRole(string roleId, string roleName)
+    {
+        var confirm = await ComfirmService.Show(
+            "Подтверждение удаления",
+            $"Вы действительно хотите удалить роль \"{roleName}\"?",
+            ConfirmButtons.YesNo,
+            ConfirmIcon.Warning);
+
+        if (confirm == ConfirmResult.Yes)
+        {
+            var role = await RoleManager.FindByIdAsync(roleId);
+            if (role != null)
+            {
+                var result = await RoleManager.DeleteAsync(role);
+                if (result.Succeeded)
+                {
+                    await LoadRolesData(_currentRolesQuery);
+                    await InvokeAsync(StateHasChanged);
+                }
+                else
+                {
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    await ComfirmService.Show("Ошибка", $"Не удалось удалить роль: {errors}", ConfirmButtons.OK, ConfirmIcon.Error);
+                }
+            }
+        }
+    }
+
+    private void EditRole(IdentityRole role)
+    {
+        _isEditMode = true;
+        _editingRoleId = role.Id;
+        _roleName = role.Name;
+        _isModalVisible = true;
+    }
+
+    private void AddRole()
+    {
+        _isEditMode = false;
+        _editingRoleId = "";
+        _roleName = "";
+        _isModalVisible = true;
+    }
+
+    private async Task HandleSaveRole()
+    {
+        if (string.IsNullOrWhiteSpace(_roleName))
+        {
+            await ComfirmService.Show("Ошибка", "Введите название роли", ConfirmButtons.OK, ConfirmIcon.Error);
+            return;
+        }
+
+        _isSubmitting = true;
+
+        IdentityResult result;
+
+        if (_isEditMode)
+        {
+            var role = await RoleManager.FindByIdAsync(_editingRoleId);
+            if (role != null)
+            {
+                role.Name = _roleName.Trim();
+                result = await RoleManager.UpdateAsync(role);
+            }
+            else
+            {
+                _isSubmitting = false;
+                await ComfirmService.Show("Ошибка", "Роль не найдена", ConfirmButtons.OK, ConfirmIcon.Error);
+                return;
+            }
+        }
+        else
+        {
+            var role = new IdentityRole(_roleName.Trim());
+            result = await RoleManager.CreateAsync(role);
+        }
+
+        _isSubmitting = false;
+
+        if (result.Succeeded)
+        {
+            _isModalVisible = false;
+            await LoadRolesData(_currentRolesQuery);
+        }
+        else
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            await ComfirmService.Show("Ошибка", $"Не удалось {(_isEditMode ? "обновить" : "добавить")} роль: {errors}", ConfirmButtons.OK, ConfirmIcon.Error);
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleCancel()
+    {
+        _isModalVisible = false;
+        _isEditMode = false;
+        _editingRoleId = "";
+        _roleName = "";
+    }
+}

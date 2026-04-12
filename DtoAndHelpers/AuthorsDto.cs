@@ -1,37 +1,31 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
-namespace TheatreReportingApp.Models
+namespace TheatreReportingApp.DtoAndHelpers
 {
-    public class Authors
+    public class AuthorsDto
     {
-        [Key]
-        public int AuthorId { get; set; }
 
         [DisplayName("Фамилия")]
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
         [MinLength(3, ErrorMessage = "Минимум 3 символа")]
         [MaxLength(100, ErrorMessage = "Максимум 100 символов")]
-        public string AuthorSurname { get; set; }
+        public string AuthorSurname { get; set; } = string.Empty;
 
         [DisplayName("Имя")]
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
         [MinLength(3, ErrorMessage = "Минимум 3 символа")]
         [MaxLength(100, ErrorMessage = "Максимум 100 символов")]
-        public string AuthorName { get; set; }
+        public string AuthorName { get; set; } = string.Empty;
 
         [DisplayName("Отчество")]
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
         [MinLength(3, ErrorMessage = "Минимум 3 символа")]
         [MaxLength(100, ErrorMessage = "Максимум 100 символов")]
-        public string AuthorFathername { get; set; }
-        public int AuthorJobId { get; set; }
-        [ForeignKey(nameof(AuthorJobId))]
+        public string? AuthorFathername { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
-        public AuthorJob AuthorJob { get; set; }
-
-        public virtual ICollection<PlayAuthors> PlayAuthors { get; set; }
+        [Range(1, int.MaxValue, ErrorMessage = "Пожалуйста, выберите работу автора")]
+        public int? SelectedJobId { get; set; }
     }
 }
