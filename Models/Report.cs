@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TheatreReportingApp.Models
 {
@@ -19,7 +20,12 @@ namespace TheatreReportingApp.Models
         public DateTime CreatedDate { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
-        public string FilePath { get; set; }
+        public string Content { get; set; }
+
+        public string UserId { get; set; }
+
+        [ForeignKey(nameof(UserId))]
+        public Users User { get; set; }
 
         public List<Performance>? Performances { get; set; }
     }

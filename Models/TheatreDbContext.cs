@@ -13,6 +13,10 @@ namespace TheatreReportingApp.Models
 
         public DbSet<PlayAuthors> PlayAuthors { get; set; }
 
+        public DbSet<StationarLocation> StationarLocations { get; set; }
+        public DbSet<OnSiteLocation> OnSiteLocations { get; set; }
+        public DbSet<TourLocation> TourLocations { get; set; }
+
         public DbSet<Report> Reports { get; set; }
         public TheatreDbContext(DbContextOptions<TheatreDbContext> options)
             : base(options)

@@ -57,7 +57,8 @@
        Visible="@_isModalVisible"
        OnOk="@HandleSavePlay"
        OnCancel="@HandleCancel"
-       ConfirmLoading="@_isSubmitting">
+       ConfirmLoading="@_isSubmitting"
+       DestroyOnClose="true">
     <div style="padding: 20px;">
         <div class="form-group">
             <label for="playName">Название спектакля:</label>
@@ -89,11 +90,6 @@
 
     private async Task GetAllPlaysAsync()
     {
-        _allPlays = await _context.Plays
-            .Include(p => p.PlayAuthors)
-            .ThenInclude(pa => pa.Authors)
-            .ToListAsync();
-
         _performanceCounts = await _context.Performances
             .GroupBy(p => p.PlayId)
             .Select(g => new { PlayId = g.Key, Count = g.Count() })
@@ -107,19 +103,34 @@
 
     private async Task LoadPlays()
     {
-        var query = _allPlays.AsQueryable();
+        var query = _context.Plays.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(searchValue))
         {
-            query = query.Where(p => p.Title.Contains(searchValue, StringComparison.OrdinalIgnoreCase));
+            query = query.Where(p => EF.Functions.Like(p.Title, $"%{searchValue}%"));
         }
 
-        _totalCount = query.Count();
+        var sortedQuery = query
+            .GroupJoin(
+                _context.Performances,
+                play => play.PlayId,
+                perf => perf.PlayId,
+                (play, performances) => new
+                {
+                    Play = play,
+                    LastDate = performances.Any()
+                        ? performances.Max(p => (DateTime?)p.EditDate)
+                        : null
+                })
+            .OrderByDescending(x => x.LastDate ?? DateTime.MinValue)
+            .Select(x => x.Play);
 
-        _playsDataSource = query
+        _totalCount = await sortedQuery.CountAsync();
+
+        _playsDataSource = await sortedQuery
             .Skip(_pageSize * (_currentPage - 1))
             .Take(_pageSize)
-            .ToList();
+            .ToListAsync();
 
         await InvokeAsync(StateHasChanged);
     }

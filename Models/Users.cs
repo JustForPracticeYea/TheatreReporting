@@ -21,6 +21,6 @@ namespace TheatreReportingApp.Models
         [MinLength(3, ErrorMessage = "Минимум 3 символа")]
         [MaxLength(100, ErrorMessage = "Максимум 100 символов")]
         [DisplayName("Отчество")]
-        public string Fathername { get; set; }
+        public string? Fathername { get; set; }
     }
 }

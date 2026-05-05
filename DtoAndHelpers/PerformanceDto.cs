@@ -13,17 +13,19 @@ namespace TheatreReportingApp.DtoAndHelpers
         public int PerformanceNumber { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
-        [Display(Name = "Место проведения")]
-        public string Location { get; set; }
+        [MinLength(3, ErrorMessage = "Минимум 3 символа")]
+        [MaxLength(100, ErrorMessage = "Максимум 100 символов")]
+        [Display(Name = "Тип спектакля")]
+        public string Type { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
-        [Display(Name = "Дата проведения")]
-        public DateTime SelectedDate { get; set; }
+        public DateTime SelectedDate { get; set; } = DateTime.Now;
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
-        [Display(Name = "Время проведения")]
         public DateTime? SelectedTime { get; set; }
-        public DateTime EventDateTime { get; set; }
+
+        [Display(Name = "Дата и время последнего изменения")]
+        public DateTime? EditDate { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
         [Display(Name = "Количество билетов проданных на кассе за наличку")]
@@ -122,20 +124,20 @@ namespace TheatreReportingApp.DtoAndHelpers
         public int AmountTickSoldNonCashOnline { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
-        [Display(Name = "Итоговое количество реализованных билетов, купленных на кассе театра (нал и безнал)")]
-        public int TotalNumTickSoldInOffice { get; set; }
+        [Display(Name = "Всё количество реализованных билетов, купленных на кассе театра (нал и безнал)")]
+        public int AllNumTickSoldInOffice { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
-        [Display(Name = "Итоговое количество реализованных билетов, купленных на интернет (нал и безнал)")]
-        public int TotalNumTickSoldOnline { get; set; }
+        [Display(Name = "Всё количество реализованных билетов, купленных через интернет (нал и безнал)")]
+        public int AllNumTickSoldOnline { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
-        [Display(Name = "Итоговая сумма денег за реализованные билеты, купленных на кассе театра (нал и безнал)")]
-        public int TotalAmountTickSoldInOffice { get; set; }
+        [Display(Name = "Вся сумма денег за реализованные билеты, купленных на кассе театра (нал и безнал)")]
+        public int AllAmountTickSoldInOffice { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
-        [Display(Name = "Итоговая сумма денег за реализованные билеты, купленных через интернет (нал и безнал)")]
-        public int TotalAmountTickSoldOnline { get; set; }
+        [Display(Name = "Вся сумма денег за реализованные билеты, купленных через интернет (нал и безнал)")]
+        public int AllAmountTickSoldOnline { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
         [Display(Name = "Реально полученная сумма денег за продажи на кассе")]
@@ -145,14 +147,95 @@ namespace TheatreReportingApp.DtoAndHelpers
         [Display(Name = "Реально полученная сумма денег за продажи через интернет")]
         public int RealAmountTickSoldInOnline { get; set; }
 
+        //
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Итоговое количество билетов, купленных на кассе театра и через интернет за наличку")]
+        public int TotalNumTickSoldCashInOfficeOnline { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Итоговая сумма денег за билеты купленные на кассе театра и через интернет за наличку")]
+        public int TotalAmountTickSoldCashInOfficeOnline { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Итоговое количество билетов, купленных на кассе театра и через интернет за безнал")]
+        public int TotalNumTickSoldNonCashInOfficeOnline { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Итоговая сумма денег за билеты купленные на кассе театра и через интернет за безнал")]
+        public int TotalAmountTickSoldNonCashInOfficeOnline { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Итоговое количество возвращенных билетов, купленных на кассе театра и через интернет за наличку")]
+        public int TotalNumTickRetCashInOfficeOnline { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Итоговая сумма денег вернувшаяся за билеты купленные на кассе театра и через интернет за наличку")]
+        public int TotalAmountFundsRetCashInOfficeOnline { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Итоговое количество возвращенных билетов, купленных на кассе театра и через интернет за безнал")]
+        public int TotalNumTickRetNonCashInOfficeOnline { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Итоговая сумма денег вернувшаяся за билеты купленные на кассе театра и через интернет за безнал")]
+        public int TotalAmountFundsRetNonCashInOfficeOnline { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Итоговое количество реализованных билетов, купленных за наличку на кассе театра и через интернет")]
+        public int TotalNumTickSoldCashOfficeOnline { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Итоговая сумма денег за реализованные билеты, купленных за наличку на кассе театра и через интернет")]
+        public int TotalAmountTickSoldCashOfficeOnline { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Итоговое количество реализованных билетов, купленных за безнал на кассе театра и через интернет")]
+        public int TotalNumTickSoldNonCashOfficeOnline { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Итоговая сумма денег за реализованные билеты, купленных за безнал на кассе театра и через интернет")]
+        public int TotalAmountTickSoldNonCashOfficeOnline { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Итговое количество всех реализованных билетов, купленных на кассе театра и через интернет (нал и безнал)")]
+        public int TotalAllNumTickSoldInOfficeOnline { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Вся итоговая сумма денег за реализованные билеты, купленных на кассе театра и через интернет (нал и безнал)")]
+        public int TotalAllAmountTickSoldInOfficeOnline { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Итоговая реально полученная сумма денег за продажи на кассе и через интернет")]
+        public int TotalRealAmountTickSoldInOfficeOnline { get; set; }
+
+        //
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Аншлаг (всего мест)")]
+        public int Capacity { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Максимальная сумма денег за билеты при аншлаге")]
+        public int MaxRevenue { get; set; }
+
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
         [Display(Name = "Количество зрителей обслуженных бесплатно")]
         public int NumViewrsServedFree { get; set; }
-        public List<Report>? Reports { get; set; }
+        //
 
+        public string? SettlementType { get; set; }
+        public string? OnSiteTownName { get; set; }
+        public string? Region { get; set; }
+        public string? TourType { get; set; }
+        public string? TourTownName { get; set; }
+        public string? Country { get; set; }
+
+        public int? StationaryId { get; set; }
+
+        public int? OnSiteId { get; set; }
+
+        public int? TourId { get; set; }
         public int PlayId { get; set; }
-
-        [ForeignKey(nameof(PlayId))]
-        public Play Play { get; set; }
     }
 }

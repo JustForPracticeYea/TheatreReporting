@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TheatreReportingApp.Models;
 
@@ -10,9 +11,11 @@ using TheatreReportingApp.Models;
 namespace TheatreReportingApp.Migrations
 {
     [DbContext(typeof(TheatreDbContext))]
-    partial class TheatreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260504221718_SecondUpdateDatabase")]
+    partial class SecondUpdateDatabase
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.25");
@@ -236,7 +239,7 @@ namespace TheatreReportingApp.Migrations
 
                     b.HasKey("OnSiteId");
 
-                    b.ToTable("OnSiteLocations");
+                    b.ToTable("OnSiteLocation");
                 });
 
             modelBuilder.Entity("TheatreReportingApp.Models.Performance", b =>
@@ -538,7 +541,7 @@ namespace TheatreReportingApp.Migrations
 
                     b.HasKey("StationarId");
 
-                    b.ToTable("StationarLocations");
+                    b.ToTable("StationarLocation");
                 });
 
             modelBuilder.Entity("TheatreReportingApp.Models.TourLocation", b =>
@@ -559,7 +562,7 @@ namespace TheatreReportingApp.Migrations
 
                     b.HasKey("TourId");
 
-                    b.ToTable("TourLocations");
+                    b.ToTable("TourLocation");
                 });
 
             modelBuilder.Entity("TheatreReportingApp.Models.Users", b =>

@@ -33,7 +33,7 @@
 
 <Table @ref="_performanceTable" TItem="Performance" PageSize="10" Total="_performanceTotal" DataSource="_performanceDataSource" OnChange="OnPerformanceChange">
     <PropertyColumn Property="p => p.PerformanceNumber"></PropertyColumn>
-    <PropertyColumn Property="p => p.Location"></PropertyColumn>
+    <PropertyColumn Property="p => p.Type"></PropertyColumn>
     <PropertyColumn Property="p => p.EventDateTime" Format="dd-MM-yyyy"></PropertyColumn>
     <ActionColumn>
         <a @onclick="() => EditPerformance(context.PerformanceId)"><Icon Type="form" Height="2em" Width="2em" /></a>
