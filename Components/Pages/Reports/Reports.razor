@@ -1,0 +1,101 @@
+﻿@page "/reports"
+@rendermode InteractiveServer
+@using AntDesign.TableModels
+@using System.ComponentModel.DataAnnotations
+@using System.ComponentModel
+@using Microsoft.AspNetCore.Authorization
+@using TheatreReportingApp.Models
+@using Microsoft.EntityFrameworkCore
+@inject TheatreDbContext _context
+@attribute [Authorize]
+
+
+<PageHeader Class="site-page-header" Title="Список отчётов" />
+<div class="controls-container">
+    <div class="search-string">
+        <Input Placeholder="Введите название отчёта" @bind-Value="@searchValue" @oninput="OnSearchInput" />
+        <Icon class="search-button" Type="search" />
+    </div>
+    <a class="add-button" @onclick="AddReport">
+        <Icon Type="plus-square" Width="37px" Height="37px" />
+    </a>
+</div>
+
+<Table @ref="_table" TItem="Report" PageSize="10" Total="_total" DataSource="_dataSource" OnChange="OnChange">
+    <PropertyColumn Property="c => c.Title" Title="Название"/>
+    <PropertyColumn Property="c => c.Type" Title="Тип отчёта" />
+    <PropertyColumn Property="c => c.CreatedDate" Title="Дата создания" Format="dd.MM.yyyy"/>
+    <PropertyColumn Property="c => c.User.Name" Title="Кем добавлен" />
+    <ActionColumn Title="Действия">
+        <a @onclick="() => ViewReport(context)"><Icon Type="arrow-right" Width="2em" Height="2em" /></a>
+@*         <a @onclick="() => DeleteReport(context.ReportId)"><Icon Type="delete" Height="2em" Width="2em" /></a> *@
+    </ActionColumn>
+</Table>
+
+@code {
+    private string searchValue { get; set; } = string.Empty;
+    private List<Report> _dataSource = new();
+    private int _total;
+    private ITable _table;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadReports();
+    }
+
+    private async Task LoadReports()
+    {
+        var query = _context.Reports.Include(r => r.User).AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchValue))
+        {
+            query = query.Where(r => r.Title.Contains(searchValue));
+        }
+
+        _total = await query.CountAsync();
+        _dataSource = await query.OrderByDescending(r => r.CreatedDate).Take(10).ToListAsync();
+    }
+
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        searchValue = e?.Value?.ToString() ?? string.Empty;
+        await LoadReports();
+    }
+
+    private async Task OnChange(QueryModel<Report> query)
+    {
+        var allReports = _context.Reports.Include(r => r.User).AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchValue))
+            allReports = allReports.Where(r => r.Title.Contains(searchValue));
+
+        _dataSource = await allReports
+            .OrderByDescending(r => r.CreatedDate)
+            .Skip(query.PageSize * (query.PageIndex - 1))
+            .Take(query.PageSize)
+            .ToListAsync();
+
+        _total = await allReports.CountAsync();
+    }
+
+    private void AddReport()
+    {
+        // переход на страницу создания отчёта
+    }
+
+    private void ViewReport(Report report)
+    {
+        // просмотр отчёта
+    }
+
+    // private async Task DeleteReport(int reportId)
+    // {
+    //     var report = await _context.Reports.FindAsync(reportId);
+    //     if (report != null)
+    //     {
+    //         _context.Reports.Remove(report);
+    //         await _context.SaveChangesAsync();
+    //         await LoadReports();
+    //     }
+    // }
+}

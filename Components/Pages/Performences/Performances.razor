@@ -28,7 +28,7 @@
         </a>
     </div>
 
-    <div style="width: 37px;"></div> <!-- Заглушка для баланса -->
+    <div style="width: 37px;"></div>
 </div>
 
 <Table @ref="_performanceTable" TItem="Performance" PageSize="10" Total="_performanceTotal" DataSource="_performanceDataSource" OnChange="OnPerformanceChange">
@@ -64,6 +64,7 @@
                                    .ThenInclude(p => p.PlayAuthors)
                                    .ThenInclude(p => p.Authors)
                                    .Where(p => p.PlayId == PlayId)
+                                   .OrderByDescending(p => p.EditDate)
                                    .ToListAsync();
 
         return performances;

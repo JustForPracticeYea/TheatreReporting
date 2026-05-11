@@ -960,6 +960,7 @@
                 .Where(pv => pv.PerformanceId == PerformanceId)
                 .ToListAsync();
             _context.PerformanceViewerCategories.RemoveRange(existingCategories);
+            await _context.SaveChangesAsync();
 
             foreach (var category in performanceViewerCategories.Where(c => c.ViewerCategoryId > 0 && c.ViewerCount > 0))
             {

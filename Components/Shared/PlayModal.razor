@@ -95,7 +95,11 @@
 
         try
         {
-            if (string.IsNullOrWhiteSpace(Model.Title)) { error = "Введите название"; return; }
+            if (string.IsNullOrWhiteSpace(Model.Title)) 
+            { 
+                error = "Введите название"; 
+                return; 
+            }
 
             Play play;
             if (IsEdit && EditPlay != null)
