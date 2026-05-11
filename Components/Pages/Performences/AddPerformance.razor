@@ -492,9 +492,16 @@
                                 <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.TotalRealAmountTickSoldInOfficeOnline" />
                             </div>
                         </div>
-                        <div class="col-md-6"></div>
                     </div>
-                    <div class="row mt-3">
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header bg-card-header">
+                    <h5 class="mb-0 text-white">Аншлаг и проценты</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <label>Аншлаг (всего мест)</label>
@@ -507,16 +514,81 @@
                                 <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.MaxRevenue" />
                             </div>
                         </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Остаток мест</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.RemainingCapacity" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Сумма за остаток билетов</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.RemainingRevenue" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Процент реализации билетов</label>
+                                <AntDesign.InputNumber Min="0" Max="100" Step="0.1" class="form-control" @bind-Value="performance.TicketImplementationPercentage" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Процент реализации средств</label>
+                                <AntDesign.InputNumber Min="0" Max="100" Step="0.1" class="form-control" @bind-Value="performance.AmountImplementationPercentage" />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <div class="form-group mb-3">
-                        <label>Зрителей бесплатно</label>
-                        <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performance.NumViewrsServedFree" />
-                    </div>
+            <div class="card mb-3">
+                <div class="card-header bg-card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-white">Категории зрителей (бесплатно)</h5>
+                </div>
+                <div class="card-body">
+                    @if (performanceViewerCategories.Any())
+                    {
+                        foreach (var category in performanceViewerCategories)
+                        {
+                            <div class="row mb-2 align-items-center">
+                                <div class="col-md-4">
+                                    <label>Категория зрителей</label>
+                                    <div class="form-group mb-0">
+                                        
+                                        <InputSelect class="form-control" @bind-Value="category.ViewerCategoryId">
+                                            <option value="0" disabled selected>Выберите категорию</option>
+                                            @foreach (var vc in viewerCategoriesList)
+                                            {
+                                                <option value="@vc.Id">@vc.CategoryName</option>
+                                            }
+                                        </InputSelect>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <label>Кол-во зрителей</label>
+                                    <div class="form-group mb-0">
+                                        <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="category.ViewerCount" />
+                                    </div>
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-sm" @onclick="() => RemoveViewerCategory(category)">
+                                        <Icon Type="delete" Height="2em" Width="2em" />
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">Нет добавленных категорий</p>
+                    }
+                    @if (performanceViewerCategories.Count < viewerCategoriesList.Count)
+                    {
+                        <button type="button" class="btn btn-sm" @onclick="AddViewerCategory">
+                            <Icon Type="plus" /> Добавить категорию
+                        </button>
+                    }
                 </div>
             </div>
 
@@ -533,6 +605,9 @@
     public int PlayId { get; set; }
     private PerformanceDto performance = new PerformanceDto();
 
+    private List<ViewerCategory> viewerCategoriesList = new();
+    private List<PerformanceViewerCategory> performanceViewerCategories = new();
+
     private List<StationarLocation> stationaryLocations = new();
     private List<string> onSiteNameOptions = new();
     private List<string> regionOptions = new();
@@ -547,6 +622,19 @@
         performance.SettlementType = "Город";
         performance.TourType = "Home";
         stationaryLocations = await _context.StationarLocations.ToListAsync();
+        viewerCategoriesList = await _context.ViewerCategories.ToListAsync();
+    }
+
+    private void AddViewerCategory()
+    {
+        if (performanceViewerCategories.Count >= viewerCategoriesList.Count) 
+            return;
+        performanceViewerCategories.Add(new PerformanceViewerCategory());
+    }
+
+    private void RemoveViewerCategory(PerformanceViewerCategory category)
+    {
+        performanceViewerCategories.Remove(category);
     }
 
     private void OnTimeChanged(DateTime? dateTime)
@@ -572,19 +660,17 @@
         performance.TourTownName = null;
         performance.Country = null;
     }
+
     private async Task LoadOnSiteNameOptions(string search)
     {
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var lower = search.ToLower();
-            var all = await _context.OnSiteLocations.ToListAsync();
-
-            onSiteNameOptions = all
-                .Where(l => l.TownName.ToLower().StartsWith(lower))
+            onSiteNameOptions = await _context.OnSiteLocations
+                .Where(l => EF.Functions.Like(l.TownName, search + "%"))
                 .Select(l => l.TownName + ", " + l.Region + " (" + l.SettlementType + ")")
                 .Distinct()
                 .Take(10)
-                .ToList();
+                .ToListAsync();
         }
         else
             onSiteNameOptions.Clear();
@@ -594,15 +680,12 @@
     {
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var lower = search.ToLower();
-            var all = await _context.OnSiteLocations.ToListAsync();
-
-            regionOptions = all
-                .Where(l => l.Region.ToLower().StartsWith(lower))
+            regionOptions = await _context.OnSiteLocations
+                .Where(l => EF.Functions.Like(l.Region, search + "%"))
                 .Select(l => l.Region)
                 .Distinct()
                 .Take(10)
-                .ToList();
+                .ToListAsync();
         }
         else
             regionOptions.Clear();
@@ -640,12 +723,11 @@
     {
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var lower = search.ToLower();
 
             if (performance.TourType == "International")
             {
                 tourCityOptions = await _context.TourLocations
-                    .Where(l => l.TownName.ToLower().StartsWith(lower) && l.Country != "Россия")
+                    .Where(l => EF.Functions.Like(l.TownName, search + "%") && l.Country != "Россия")
                     .Select(l => l.TownName + ", " + l.Country)
                     .Distinct()
                     .Take(10)
@@ -654,7 +736,7 @@
             else
             {
                 tourCityOptions = await _context.TourLocations
-                    .Where(l => l.TownName.ToLower().StartsWith(lower) && l.Country == "Россия")
+                    .Where(l => EF.Functions.Like(l.TownName, search + "%") && l.Country == "Россия")
                     .Select(l => l.TownName)
                     .Distinct()
                     .Take(10)
@@ -669,10 +751,8 @@
     {
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var lower = search.ToLower();
-
             countryOptions = await _context.TourLocations
-                .Where(l => l.Country.ToLower().StartsWith(lower) && l.Country != "Россия")
+                .Where(l => EF.Functions.Like(l.Country, search + "%") && l.Country != "Россия")
                 .Select(l => l.Country)
                 .Distinct()
                 .Take(10)
@@ -775,7 +855,6 @@
             OnSiteId = performance.OnSiteId,
             TourId = performance.TourId,
             EventDateTime = eventDateTime,
-            UserId = userId,
 
             NumTickCashOffice = performance.NumTickCashOffice,
             NumTickNonCashOffice = performance.NumTickNonCashOffice,
@@ -832,13 +911,26 @@
 
             Capacity = performance.Capacity,
             MaxRevenue = performance.MaxRevenue,
-            NumViewrsServedFree = performance.NumViewrsServedFree,
+            RemainingCapacity = performance.RemainingCapacity,
+            RemainingRevenue = performance.RemainingRevenue,
+            TicketImplementationPercentage = performance.TicketImplementationPercentage,
+            AmountImplementationPercentage = performance.AmountImplementationPercentage,
+
             EditDate = DateTime.Now,
+            UserId = userId,
 
             PlayId = PlayId
         };
 
         _context.Performances.Add(newPerformance);
+        await _context.SaveChangesAsync();
+
+
+        foreach (var category in performanceViewerCategories.Where(c => c.ViewerCategoryId > 0 && c.ViewerCount > 0))
+        {
+            category.PerformanceId = newPerformance.PerformanceId;
+            _context.PerformanceViewerCategories.Add(category);
+        }
         await _context.SaveChangesAsync();
         Navigation.NavigateTo($"/performances/{PlayId}");
     }

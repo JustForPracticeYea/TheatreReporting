@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TheatreReportingApp.Models;
 
@@ -10,9 +11,11 @@ using TheatreReportingApp.Models;
 namespace TheatreReportingApp.Migrations
 {
     [DbContext(typeof(TheatreDbContext))]
-    partial class TheatreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260509143711_DeleteNumViewrsServedFree")]
+    partial class DeleteNumViewrsServedFree
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.25");
@@ -443,30 +446,6 @@ namespace TheatreReportingApp.Migrations
                     b.ToTable("Performances");
                 });
 
-            modelBuilder.Entity("TheatreReportingApp.Models.PerformanceViewerCategory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("PerformanceId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("ViewerCategoryId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("ViewerCount")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PerformanceId");
-
-                    b.HasIndex("ViewerCategoryId");
-
-                    b.ToTable("PerformanceViewerCategories");
-                });
-
             modelBuilder.Entity("TheatreReportingApp.Models.Play", b =>
                 {
                     b.Property<int>("PlayId")
@@ -679,7 +658,15 @@ namespace TheatreReportingApp.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("PerformanceId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ViewerCount")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("PerformanceId");
 
                     b.ToTable("ViewerCategories");
                 });
@@ -798,25 +785,6 @@ namespace TheatreReportingApp.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("TheatreReportingApp.Models.PerformanceViewerCategory", b =>
-                {
-                    b.HasOne("TheatreReportingApp.Models.Performance", "Performance")
-                        .WithMany("PerformanceViewerCategories")
-                        .HasForeignKey("PerformanceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TheatreReportingApp.Models.ViewerCategory", "ViewerCategory")
-                        .WithMany("PerformanceViewerCategories")
-                        .HasForeignKey("ViewerCategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Performance");
-
-                    b.Navigation("ViewerCategory");
-                });
-
             modelBuilder.Entity("TheatreReportingApp.Models.PlayAuthors", b =>
                 {
                     b.HasOne("TheatreReportingApp.Models.Authors", "Authors")
@@ -847,6 +815,17 @@ namespace TheatreReportingApp.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("TheatreReportingApp.Models.ViewerCategory", b =>
+                {
+                    b.HasOne("TheatreReportingApp.Models.Performance", "Performances")
+                        .WithMany("ViewerCategories")
+                        .HasForeignKey("PerformanceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Performances");
+                });
+
             modelBuilder.Entity("TheatreReportingApp.Models.Authors", b =>
                 {
                     b.Navigation("PlayAuthors");
@@ -859,7 +838,7 @@ namespace TheatreReportingApp.Migrations
 
             modelBuilder.Entity("TheatreReportingApp.Models.Performance", b =>
                 {
-                    b.Navigation("PerformanceViewerCategories");
+                    b.Navigation("ViewerCategories");
                 });
 
             modelBuilder.Entity("TheatreReportingApp.Models.Play", b =>
@@ -875,11 +854,6 @@ namespace TheatreReportingApp.Migrations
             modelBuilder.Entity("TheatreReportingApp.Models.TourLocation", b =>
                 {
                     b.Navigation("Performances");
-                });
-
-            modelBuilder.Entity("TheatreReportingApp.Models.ViewerCategory", b =>
-                {
-                    b.Navigation("PerformanceViewerCategories");
                 });
 #pragma warning restore 612, 618
         }

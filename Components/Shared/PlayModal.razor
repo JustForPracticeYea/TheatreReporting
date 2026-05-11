@@ -1,0 +1,168 @@
+﻿@using TheatreReportingApp.Models
+@inject TheatreDbContext _context
+
+<Modal Title="@(IsEdit ? "Редактирование спектакля" : "Добавление спектакля")"
+       Visible="@Visible"
+       OnOk="HandleOk"
+       OnCancel="HandleCancel"
+       DestroyOnClose = "true"
+       ConfirmLoading="_isSubmitting"
+       MaskClosable="false"
+       Width="700">
+
+    <Form Model="@Model"
+          OnFinishFailed="@OnFinishFailed"
+          OnFinish="@OnFinish"
+          @ref="@FormRef">
+
+        <div>
+            @if(error.Length > 0)
+            {
+                <Alert Type="AlertType.Error" Message="@error" Banner/>
+            }
+        </div>
+
+        <FormItem Label="Введите название спектакля">
+            <Input @bind-Value="@context.Title"/>
+        </FormItem>
+        
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">Авторы спектакля</h6>
+            <Button OnClick="@AddAuthor" Disabled="@(Model.PlayAuthors.Count >= allAuthors.Count)">
+                <Icon Type="plus" /> Добавить автора
+            </Button>
+        </div>
+
+        @foreach (var author in context.PlayAuthors)
+        {
+            <div class="mb-2">
+                <label>Автор</label>
+                <InputSelect class="form-control" @bind-Value="author.AuthorsId">
+                    <option value="0" disabled selected>Выберите автора</option>
+                    @foreach (var a in allAuthors)
+                    {
+                        @if (a.AuthorId == author.AuthorsId || !Model.PlayAuthors.Any(pa => pa.AuthorsId == a.AuthorId && pa != author))
+                        {
+                            <option value="@a.AuthorId">
+                                @a.AuthorSurname @a.AuthorName[0].@a.AuthorFathername[0]. (@a.AuthorJob.Title)
+                            </option>
+                        }
+                    }
+                </InputSelect>
+
+                <label>%</label>
+                <AntDesign.InputNumber TValue="decimal" Min="1" Max="100" Step="1" class="form-control" @bind-Value="author.RoyaltyPercentage" />
+
+                <label>№ договора</label>
+                <Input class="form-control" @bind-Value="author.ContractNumber" />
+
+                <Button Danger OnClick="@(() => RemoveAuthor(author))">
+                    <Icon Type="delete" />
+                </Button>
+            </div>
+        }
+    </Form>
+</Modal>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public bool IsEdit { get; set; }
+    [Parameter] public Play? EditPlay { get; set; }
+    [Parameter] public EventCallback OnSuccess { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+
+    private Play Model { get; set; } = new() { PlayAuthors = new List<PlayAuthors>() };
+    private Form<Play> FormRef { get; set; }
+    private string error = "";
+    private bool _isSubmitting;
+    private List<Authors> allAuthors = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        allAuthors = await _context.Authors.Include(a => a.AuthorJob).ToListAsync();
+        if (IsEdit && EditPlay != null)
+        {
+            Model = EditPlay;
+            Model.PlayAuthors = await _context.PlayAuthors
+                .Where(pa => pa.PlayId == EditPlay.PlayId).ToListAsync();
+        }
+    }
+
+    private async Task OnFinish(EditContext editContext)
+    {
+        if (_isSubmitting) return;
+        _isSubmitting = true;
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(Model.Title)) { error = "Введите название"; return; }
+
+            Play play;
+            if (IsEdit && EditPlay != null)
+            {
+                play = EditPlay; play.Title = Model.Title;
+                var existing = await _context.PlayAuthors.Where(pa => pa.PlayId == play.PlayId).ToListAsync();
+                _context.PlayAuthors.RemoveRange(existing);
+            }
+            else
+            {
+                play = new Play { Title = Model.Title };
+                _context.Plays.Add(play);
+                await _context.SaveChangesAsync();
+            }
+
+            foreach (var author in Model.PlayAuthors.Where(a => a.AuthorsId > 0))
+            {
+                author.PlayId = play.PlayId;
+                author.ContractDate = DateTime.Now;
+                _context.PlayAuthors.Add(author);
+            }
+            await _context.SaveChangesAsync();
+
+            Visible = false;
+            await VisibleChanged.InvokeAsync();
+            await OnSuccess.InvokeAsync();
+        }
+        catch (Exception ex) 
+        { 
+            error = ex.Message; 
+        }
+        finally 
+        { 
+            _isSubmitting = false; 
+        }
+    }
+
+    private void OnFinishFailed(EditContext editContext)
+    {
+        error = "Заполните обязательные поля";
+    }
+    private async Task HandleOk()
+    { 
+        FormRef?.Submit();
+    }
+
+    private void AddAuthor() 
+    { 
+        if (Model.PlayAuthors.Count < allAuthors.Count) 
+            Model.PlayAuthors.Add(new PlayAuthors()); 
+    }
+    private void RemoveAuthor(PlayAuthors author)
+    {
+        Model.PlayAuthors.Remove(author);
+    }
+
+    private async Task HandleCancel()
+    {
+        Visible = false;
+        await VisibleChanged.InvokeAsync(false);
+        ResetForm();
+    }
+
+    private void ResetForm()
+    {
+        Model = new Play { PlayAuthors = new List<PlayAuthors>() };
+        error = "";
+        FormRef?.Reset();
+    }
+}

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TheatreReportingApp.Models;
 
@@ -10,9 +11,11 @@ using TheatreReportingApp.Models;
 namespace TheatreReportingApp.Migrations
 {
     [DbContext(typeof(TheatreDbContext))]
-    partial class TheatreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260510095351_UpdateViewerCategory")]
+    partial class UpdateViewerCategory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.25");
@@ -464,7 +467,7 @@ namespace TheatreReportingApp.Migrations
 
                     b.HasIndex("ViewerCategoryId");
 
-                    b.ToTable("PerformanceViewerCategories");
+                    b.ToTable("PerformanceViewerCategory");
                 });
 
             modelBuilder.Entity("TheatreReportingApp.Models.Play", b =>

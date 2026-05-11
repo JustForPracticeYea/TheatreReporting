@@ -486,30 +486,90 @@
                         </div>
                         <div class="col-md-6"></div>
                     </div>
-                    <div class="row mt-3">
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header bg-card-header">
+                    <h5 class="mb-0 text-white">Аншлаг и проценты</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label>Аншлаг (всего мест)</label>
-                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performanceDto.Capacity" />
+                                <label>Остаток мест</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performanceDto.RemainingCapacity" />
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label>Максимальная сумма при аншлаге</label>
-                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performanceDto.MaxRevenue" />
+                                <label>Сумма за остаток билетов</label>
+                                <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performanceDto.RemainingRevenue" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Процент реализации билетов</label>
+                                <AntDesign.InputNumber Min="0" Max="100" Step="0.1" class="form-control" @bind-Value="performanceDto.TicketImplementationPercentage" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label>Процент реализации средств</label>
+                                <AntDesign.InputNumber Min="0" Max="100" Step="0.1" class="form-control" @bind-Value="performanceDto.AmountImplementationPercentage" />
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <div class="card mb-3">
+                <div class="card-header bg-card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-white">Категории зрителей (бесплатно)</h5>
+                </div>
+                <div class="card-body">
+                    @if (performanceViewerCategories.Any())
+                    {
+                        foreach (var category in performanceViewerCategories)
+                        {
+                            <div class="row mb-2 align-items-center">
+                                <div class="col-md-4">
+                                    <label>Категория зрителей</label>
+                                    <div class="form-group mb-0">
 
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <div class="form-group mb-3">
-                        <label>Зрителей бесплатно</label>
-                        <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="performanceDto.NumViewrsServedFree" />
-                    </div>
+                                        <InputSelect class="form-control" @bind-Value="category.ViewerCategoryId">
+                                            <option value="0" disabled selected>Выберите категорию</option>
+                                            @foreach (var vc in viewerCategoriesList)
+                                            {
+                                                <option value="@vc.Id">@vc.CategoryName</option>
+                                            }
+                                        </InputSelect>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <label>Кол-во зрителей</label>
+                                    <div class="form-group mb-0">
+                                        <AntDesign.InputNumber Min="0" Step="1" class="form-control" @bind-Value="category.ViewerCount" />
+                                    </div>
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-sm" @onclick="() => RemoveViewerCategory(category)">
+                                        <Icon Type="delete" Height="2em" Width="2em" />
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">Нет добавленных категорий</p>
+                    }
+                    @if (performanceViewerCategories.Count < viewerCategoriesList.Count)
+                    {
+                        <button type="button" class="btn btn-sm" @onclick="AddViewerCategory">
+                            <Icon Type="plus" /> Добавить категорию
+                        </button>
+                    }
                 </div>
             </div>
 
@@ -527,6 +587,10 @@
 
     private PerformanceDto performanceDto = new();
     private Performance performance;
+
+    private List<ViewerCategory> viewerCategoriesList = new();
+    private List<PerformanceViewerCategory> performanceViewerCategories = new();
+
     private List<StationarLocation> stationaryLocations = new();
     private List<string> onSiteNameOptions = new();
     private List<string> regionOptions = new();
@@ -537,6 +601,9 @@
     {
         stationaryLocations = await _context.StationarLocations.ToListAsync();
         performance = await _context.Performances.FindAsync(PerformanceId);
+        viewerCategoriesList = await _context.ViewerCategories.ToListAsync();
+        performanceViewerCategories = await _context.PerformanceViewerCategories.Where(pv => pv.PerformanceId == PerformanceId)
+                                                                                .ToListAsync();
 
         performanceDto = new PerformanceDto
         {
@@ -594,7 +661,10 @@
             TotalRealAmountTickSoldInOfficeOnline = performance.TotalRealAmountTickSoldInOfficeOnline,
             Capacity = performance.Capacity,
             MaxRevenue = performance.MaxRevenue,
-            NumViewrsServedFree = performance.NumViewrsServedFree,
+            RemainingCapacity = performance.RemainingCapacity,
+            RemainingRevenue = performance.RemainingRevenue,
+            TicketImplementationPercentage = performance.TicketImplementationPercentage,
+            AmountImplementationPercentage = performance.AmountImplementationPercentage,
             PlayId = PlayId
         };
 
@@ -618,6 +688,18 @@
                 performanceDto.TourType = tour.Country == "Россия" ? "Home" : "International";
             }
         }
+    }
+
+    private void AddViewerCategory()
+    {
+        if (performanceViewerCategories.Count >= viewerCategoriesList.Count) 
+            return;
+        performanceViewerCategories.Add(new PerformanceViewerCategory());
+    }
+
+    private void RemoveViewerCategory(PerformanceViewerCategory category)
+    {
+        performanceViewerCategories.Remove(category);
     }
 
     private void OnTypeChanged(ChangeEventArgs e)
@@ -868,8 +950,22 @@
             performance.TotalRealAmountTickSoldInOfficeOnline = performanceDto.TotalRealAmountTickSoldInOfficeOnline;
             performance.Capacity = performanceDto.Capacity;
             performance.MaxRevenue = performanceDto.MaxRevenue;
-            performance.NumViewrsServedFree = performanceDto.NumViewrsServedFree;
+            performance.RemainingCapacity = performanceDto.RemainingCapacity;
+            performance.RemainingRevenue = performanceDto.RemainingRevenue;
+            performance.TicketImplementationPercentage = performanceDto.TicketImplementationPercentage;
+            performance.AmountImplementationPercentage = performanceDto.AmountImplementationPercentage;
             performance.EditDate = DateTime.Now;
+
+            var existingCategories = await _context.PerformanceViewerCategories
+                .Where(pv => pv.PerformanceId == PerformanceId)
+                .ToListAsync();
+            _context.PerformanceViewerCategories.RemoveRange(existingCategories);
+
+            foreach (var category in performanceViewerCategories.Where(c => c.ViewerCategoryId > 0 && c.ViewerCount > 0))
+            {
+                category.PerformanceId = PerformanceId;
+                _context.PerformanceViewerCategories.Add(category);
+            }
 
             await _context.SaveChangesAsync();
             Navigation.NavigateTo($"/performances/{PlayId}");

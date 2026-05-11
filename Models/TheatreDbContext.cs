@@ -10,14 +10,15 @@ namespace TheatreReportingApp.Models
         public DbSet<Authors> Authors { get; set; }
         public DbSet<Performance> Performances { get; set; }
         public DbSet<Play> Plays { get; set; }
-
         public DbSet<PlayAuthors> PlayAuthors { get; set; }
-
         public DbSet<StationarLocation> StationarLocations { get; set; }
         public DbSet<OnSiteLocation> OnSiteLocations { get; set; }
         public DbSet<TourLocation> TourLocations { get; set; }
-
+        public DbSet<ViewerCategory> ViewerCategories { get; set; }
         public DbSet<Report> Reports { get; set; }
+        public DbSet<PerformanceViewerCategory> PerformanceViewerCategories { get; set; }
+
+
         public TheatreDbContext(DbContextOptions<TheatreDbContext> options)
             : base(options)
         {

@@ -53,21 +53,7 @@
             OnChange="@OnPageChanged">
 </Pagination>
 
-<Modal Title="@("Добавление названия спектакля")"
-       Visible="@_isModalVisible"
-       OnOk="@HandleSavePlay"
-       OnCancel="@HandleCancel"
-       ConfirmLoading="@_isSubmitting"
-       DestroyOnClose="true">
-    <div style="padding: 20px;">
-        <div class="form-group">
-            <label for="playName">Название спектакля:</label>
-            <Input @bind-Value="@playName"
-                   id="playName"
-                   Placeholder="Введите название спектакля" />
-        </div>
-    </div>
-</Modal>
+<TheatreReportingApp.Components.Shared.PlayModal @bind-Visible = "@_isModalVisible" OnSuccess="OnPlaySaved"/>
 
 @code {
     private List<Play> _playsDataSource = new();
@@ -81,9 +67,12 @@
     private bool _isModalVisible = false;
     private bool _isSubmitting = false;
     private string playName = "";
+    private List<PlayAuthors> newPlayAuthors = new();
+    private List<Models.Authors> allAuthors = new();
 
     protected override async Task OnInitializedAsync()
     {
+        allAuthors = await _context.Authors.Include(a => a.AuthorJob).ToListAsync();
         await GetAllPlaysAsync();
         await LoadPlays();
     }
@@ -153,33 +142,11 @@
         _isModalVisible = true;
     }
 
-    private async Task HandleSavePlay()
+    private async Task OnPlaySaved()
     {
-        if (string.IsNullOrWhiteSpace(playName))
-        {
-            return;
-        }
-
-        _isSubmitting = true;
-
-        var newPlay = new Play
-        {
-            Title = playName
-        };
-
-        _context.Plays.Add(newPlay);
-        await _context.SaveChangesAsync();
-
-        _isSubmitting = false;
-
         _isModalVisible = false;
         await GetAllPlaysAsync();
         await LoadPlays();
     }
 
-    private void HandleCancel()
-    {
-        _isModalVisible = false;
-        playName = "";
-    }
 }

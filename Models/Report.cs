@@ -27,6 +27,6 @@ namespace TheatreReportingApp.Models
         [ForeignKey(nameof(UserId))]
         public Users User { get; set; }
 
-        public List<Performance>? Performances { get; set; }
+        public virtual ICollection<Performance>? Performances { get; set; }
     }
 }

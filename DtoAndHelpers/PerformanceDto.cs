@@ -220,8 +220,21 @@ namespace TheatreReportingApp.DtoAndHelpers
         public int MaxRevenue { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
-        [Display(Name = "Количество зрителей обслуженных бесплатно")]
-        public int NumViewrsServedFree { get; set; }
+        [Display(Name = "Остаток мест")]
+        public int RemainingCapacity { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Сумма денег за остаток билетов")]
+        public int RemainingRevenue { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Процент реализации")]
+        public double TicketImplementationPercentage { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Процент реализации средств")]
+        public double AmountImplementationPercentage { get; set; }
+
         //
 
         public string? SettlementType { get; set; }

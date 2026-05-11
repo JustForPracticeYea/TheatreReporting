@@ -145,8 +145,6 @@ namespace TheatreReportingApp.Models
         [Display(Name = "Реально полученная сумма денег за продажи через интернет")]
         public int RealAmountTickSoldInOnline { get; set; }
 
-        //
-
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
         [Display(Name = "Итоговое количество билетов, купленных на кассе театра и через интернет за наличку")]
         public int TotalNumTickSoldCashInOfficeOnline { get; set; }
@@ -218,10 +216,22 @@ namespace TheatreReportingApp.Models
         public int MaxRevenue { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
-        [Display(Name = "Количество зрителей обслуженных бесплатно")]
+        [Display(Name = "Остаток мест")]
+        public int RemainingCapacity { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Сумма денег за остаток билетов")]
+        public int RemainingRevenue { get; set;}
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Процент реализации")]
+        public double TicketImplementationPercentage { get; set; }
+
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        [Display(Name = "Процент реализации средств")]
+        public double AmountImplementationPercentage { get; set; }
 
         //
-        public int NumViewrsServedFree { get; set; }
 
         public int? StationaryId { get; set; }
         [ForeignKey(nameof(StationaryId))]
@@ -235,7 +245,9 @@ namespace TheatreReportingApp.Models
         [ForeignKey(nameof(TourId))]
         public TourLocation Tour { get; set; }
 
-        public List<Report>? Reports { get; set; }
+        public virtual ICollection<Report>? Reports { get; set; }
+
+        public virtual ICollection<PerformanceViewerCategory>? PerformanceViewerCategories { get; set; }
 
         public int PlayId { get; set; }
 
