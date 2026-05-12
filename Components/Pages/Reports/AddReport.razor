@@ -1,0 +1,315 @@
+﻿@page "/AddReport"
+@using Microsoft.AspNetCore.Authorization
+@using TheatreReportingApp.DtoAndHelpers
+@using TheatreReportingApp.Models
+@using Microsoft.EntityFrameworkCore
+@rendermode InteractiveServer
+@inject TheatreDbContext _context
+@inject NavigationManager Navigation
+@attribute [Authorize]
+
+<h3 class="text-center">Создание отчёта</h3>
+<div class="form-container-reports">
+    <div class="form-wrapper">
+        <div class="form-group mb-3">
+            <label>Название отчёта</label>
+            <Input class="form-control" @bind-Value="@report.Title" Placeholder="Введите название отчёта" />
+        </div>
+
+        <div class="form-group mb-3">
+            <label>Тип отчёта</label>
+            <InputSelect class="form-control" @bind-Value="@report.Type">
+                <option value="Спектакли">По спектаклям</option>
+                <option value="Авторы">По авторам</option>
+            </InputSelect>
+        </div>
+
+        @if (report.Type == "Спектакли")
+        {
+            <div class="form-group mb-3">
+                <label>Категория</label>
+                <InputSelect class="form-control" @bind-Value="@performanceFilter">
+                    <option value="Все">По всем</option>
+                    <option value="Стационар">Стационар</option>
+                    <option value="Выезд">Выезд</option>
+                    <option value="Гастроль">Гастроли</option>
+                </InputSelect>
+            </div>
+
+            @if (performanceFilter == "Стационар")
+            {
+                <div class="form-group mb-3">
+                    <label>Площадки</label>
+                    <InputSelect class="form-control" @bind-Value="@stationaryFilter">
+                        <option value="Все">По всем</option>
+                        @foreach (var loc in stationaryLocations)
+                        {
+                            <option value="@loc">@loc</option>
+                        }
+                    </InputSelect>
+                </div>
+            }
+
+            @if (performanceFilter == "Выезд")
+            {
+                <div class="form-group mb-3">
+                    <label>Тип населённого пункта</label>
+                    <InputSelect class="form-control" @bind-Value="@onsiteFilter">
+                        <option value="Все">По всем</option>
+                        @foreach (var type in onsiteTypes)
+                        {
+                            <option value="@type">@type</option>
+                        }
+                    </InputSelect>
+                </div>
+            }
+
+            @if (performanceFilter == "Гастроль")
+            {
+                <div class="form-group mb-3">
+                    <label>Тип гастролей</label>
+                    <InputSelect class="form-control" @bind-Value="@tourFilter">
+                        <option value="Все">По всем</option>
+                        <option value="Россия">По России</option>
+                        <option value="Зарубеж">Зарубеж</option>
+                    </InputSelect>
+                </div>
+            }
+        }
+
+        <div class="form-group mb-3">
+            <label>Дата, с которой формируется отчёт</label>
+            <AntDesign.DatePicker class="form-control w-50"
+                                  CultureInfo="@System.Globalization.CultureInfo.GetCultureInfo("ru-Ru")"
+                                  @bind-Value="@report.CreatedDate" />
+        </div>
+
+        <div class="form-group mb-3">
+            <label>Период</label>
+            <div class="d-flex flex-wrap gap-2 mb-2">
+                <Button Type="@(selectedPeriod == "12M" ? ButtonType.Primary : ButtonType.Default)"
+                        OnClick="@(() => SetPeriod("12M"))">
+                    1 год
+                </Button>
+                <Button Type="@(selectedPeriod == "9M" ? ButtonType.Primary : ButtonType.Default)"
+                        OnClick="@(() => SetPeriod("9M"))">
+                    9 мес
+                </Button>
+                <Button Type="@(selectedPeriod == "6M" ? ButtonType.Primary : ButtonType.Default)"
+                        OnClick="@(() => SetPeriod("6M"))">
+                    6 мес
+                </Button>
+                <Button Type="@(selectedPeriod == "3M" ? ButtonType.Primary : ButtonType.Default)"
+                        OnClick="@(() => SetPeriod("3M"))">
+                    3 мес
+                </Button>
+                <Button Type="@(selectedPeriod == "1M" ? ButtonType.Primary : ButtonType.Default)"
+                        OnClick="@(() => SetPeriod("1M"))">
+                    1 мес
+                </Button>
+                <Button Type="@(selectedPeriod == "Custom" ? ButtonType.Primary : ButtonType.Default)"
+                        OnClick="@(() => SetPeriod("Custom"))">
+                    Другое
+                </Button>
+            </div>
+        </div>
+
+        @if (selectedPeriod == "Custom")
+        {
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label>С даты</label>
+                        <AntDesign.DatePicker class="form-control"
+                                              CultureInfo="@System.Globalization.CultureInfo.GetCultureInfo("ru-Ru")"
+                                              @bind-Value="@customStartDate" />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label>По дату</label>
+                        <AntDesign.DatePicker class="form-control"
+                                              CultureInfo="@System.Globalization.CultureInfo.GetCultureInfo("ru-Ru")"
+                                              @bind-Value="@customEndDate" />
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="alert alert-info">
+            <strong>Период отчёта:</strong> @GetPeriodDescription()
+        </div>
+
+        <div class="form-group mt-3">
+            <Button Type="@ButtonType.Primary" OnClick="@GenerateReport" Loading="@_isGenerating">
+                Сформировать отчёт
+            </Button>
+            <Button OnClick="@Cancel" Class="ms-2">Отмена</Button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private Report report = new()
+    {
+        Title = $"Отчёт от {DateTime.Now:dd.MM.yyyy}",
+        Type = "Спектакли",
+        CreatedDate = DateTime.Now
+    };
+    private string selectedPeriod = "1M";
+    private DateTime customStartDate = DateTime.Now;
+    private DateTime customEndDate = DateTime.Now.AddMonths(1);
+    private bool _isGenerating;
+
+    private string performanceFilter = "Все";
+    private string stationaryFilter = "Все";
+    private string onsiteFilter = "Все";
+    private string tourFilter = "Все";
+    private List<string> stationaryLocations = new();
+    private List<string> onsiteTypes = new() { "Город", "Село" };
+
+    private DateTime startDate => selectedPeriod == "Custom" ? customStartDate : report.CreatedDate;
+    private DateTime endDate => selectedPeriod switch
+    {
+        "1M" => report.CreatedDate.AddMonths(1),
+        "3M" => report.CreatedDate.AddMonths(3),
+        "6M" => report.CreatedDate.AddMonths(6),
+        "9M" => report.CreatedDate.AddMonths(9),
+        "12M" => report.CreatedDate.AddMonths(12),
+        _ => customEndDate
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        stationaryLocations = await _context.StationarLocations.Select(s => s.LocationName).Distinct().ToListAsync();
+    }
+
+    private void SetPeriod(string period) => selectedPeriod = period;
+
+    private string GetPeriodDescription() => selectedPeriod switch
+    {
+        "1M" => $"1 месяц ({startDate:dd.MM.yyyy} — {endDate:dd.MM.yyyy})",
+        "3M" => $"3 месяца ({startDate:dd.MM.yyyy} — {endDate:dd.MM.yyyy})",
+        "6M" => $"6 месяцев ({startDate:dd.MM.yyyy} — {endDate:dd.MM.yyyy})",
+        "9M" => $"9 месяцев ({startDate:dd.MM.yyyy} — {endDate:dd.MM.yyyy})",
+        "12M" => $"1 год ({startDate:dd.MM.yyyy} — {endDate:dd.MM.yyyy})",
+        _ => $"{customStartDate:dd.MM.yyyy} — {customEndDate:dd.MM.yyyy}"
+    };
+
+    private async Task GenerateReport()
+    {
+        _isGenerating = true;
+
+        var metadata = new
+        {
+            type = report.Type,
+            performanceFilter,
+            stationaryFilter,
+            onsiteFilter,
+            tourFilter,
+            period = new { from = startDate, to = endDate }
+        };
+
+        var content = new Dictionary<string, object> { ["metadata"] = metadata };
+
+        if (report.Type == "Спектакли")
+            content["data"] = await GetPerformancesData();
+        else if (report.Type == "Авторы")
+            content["data"] = await GetAuthorsData();
+
+        report.Content = System.Text.Json.JsonSerializer.Serialize(content,
+            new System.Text.Json.JsonSerializerOptions 
+            { 
+                WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping 
+            });
+
+        report.UserId = _context.Users.Select(u => u.Id).FirstOrDefault();
+        _context.Reports.Add(report);
+        await _context.SaveChangesAsync();
+
+        _isGenerating = false;
+        Navigation.NavigateTo("/reports");
+    }
+
+    private async Task<PlayReportDataContainer> GetPerformancesData()
+    {
+        var query = _context.Performances.Where(p => p.EventDateTime >= startDate && p.EventDateTime < endDate);
+
+        query = performanceFilter switch
+        {
+            "Стационар" => query.Where(p => p.Type == "Стационар"),
+            "Выезд" => query.Where(p => p.Type == "Выезд"),
+            "Гастроль" => query.Where(p => p.Type == "Гастроль"),
+            _ => query
+        };
+
+        if (performanceFilter == "Стационар" && stationaryFilter != "Все") 
+            query = query.Where(p => p.Stationary.LocationName == stationaryFilter);
+
+        if (performanceFilter == "Выезд" && onsiteFilter != "Все") 
+            query = query.Where(p => p.OnSite.SettlementType == onsiteFilter);
+
+        if (performanceFilter == "Гастроль" && tourFilter != "Все")
+            query = tourFilter == "Россия" ? query.Where(p => p.Tour.Country == "Россия") : query.Where(p => p.Tour.Country != "Россия");
+
+        var performances = await query.Include(p => p.Play)
+                                      .Include(p => p.PerformanceViewerCategories)
+                                           .ThenInclude(v => v.ViewerCategory)
+                                       .ToListAsync();
+        var allPlays = await _context.Plays.OrderBy(p => p.Title).ToListAsync();
+
+        var freeCategories = performances.SelectMany(p => p.PerformanceViewerCategories).GroupBy(v => v.ViewerCategory.CategoryName)
+            .Select(g => new FreeCategoryData 
+            { 
+                Category = g.Key, 
+                Count = g.Sum(v => v.ViewerCount) 
+            }).ToList();
+
+        return new PlayReportDataContainer
+        {
+            TotalData = new PlayReportTotal
+            {
+                TotalPerformances = performances.Count,
+                TotalAudience = performances.Sum(p => p.TotalAllNumTickSoldInOfficeOnline),
+                GrossRevenue = performances.Sum(p => p.TotalAllAmountTickSoldInOfficeOnline),
+                RealRevenue = performances.Sum(p => p.TotalRealAmountTickSoldInOfficeOnline),
+                TotalTransferred = 0,
+                TotalFreeAudience = freeCategories.Sum(f => f.Count),
+                FreeAudienceByCategory = freeCategories
+            },
+            Plays = allPlays.Select(play =>
+            {
+                var pp = performances.Where(p => p.PlayId == play.PlayId).ToList();
+                return new PlayReportData
+                {
+                    PlayTitle = play.Title,
+                    PerformanceCount = pp.Count,
+                    TotalAudience = pp.Sum(p => p.TotalAllNumTickSoldInOfficeOnline),
+                    GrossRevenue = pp.Sum(p => p.TotalAllAmountTickSoldInOfficeOnline),
+                    RealRevenue = pp.Sum(p => p.TotalRealAmountTickSoldInOfficeOnline),
+                    Transferred = 0
+                };
+            }).ToList()
+        };
+    }
+
+    private async Task<List<AuthorReportData>> GetAuthorsData()
+    {
+        var performances = await _context.Performances.Where(p => p.EventDateTime >= startDate && p.EventDateTime < endDate)
+                                                      .Include(p => p.Play)
+                                                        .ThenInclude(p => p.PlayAuthors)
+                                                        .ThenInclude(pa => pa.Authors)
+                                                      .ToListAsync();
+
+        return performances.SelectMany(p => p.Play.PlayAuthors)
+        .GroupBy(pa => pa.Authors)
+        .Select(g => new AuthorReportData
+        {
+            Author = $"{g.Key.AuthorSurname} {g.Key.AuthorName} {g.Key.AuthorFathername}",
+            TotalRoyalty = g.Sum(pa => performances.Where(p => p.PlayId == pa.PlayId)
+                .Sum(p => (p.RealAmountTickSoldInOffice + p.RealAmountTickSoldInOnline) * pa.RoyaltyPercentage / 100))
+        }).ToList();
+    }
+
+    private void Cancel() => Navigation.NavigateTo("/reports");
+}

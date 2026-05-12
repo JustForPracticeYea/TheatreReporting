@@ -8,10 +8,6 @@
 .ant-table-thead > tr > th{
      text-align: center;
 }
-.ant-table-content {
-    width: 70%;
-    justify-self: center;
-}
 .ant-table-thead > tr > th {
     background-color: #424242;
     color:white;
@@ -35,3 +31,6 @@
         cursor: pointer;
         color: black;
     }
+.report-table .ant-table-content {
+    width: 100% !important;
+}

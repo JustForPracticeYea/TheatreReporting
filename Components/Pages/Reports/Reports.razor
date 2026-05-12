@@ -6,6 +6,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using TheatreReportingApp.Models
 @using Microsoft.EntityFrameworkCore
+@inject NavigationManager Navigation
 @inject TheatreDbContext _context
 @attribute [Authorize]
 
@@ -27,7 +28,7 @@
     <PropertyColumn Property="c => c.CreatedDate" Title="Дата создания" Format="dd.MM.yyyy"/>
     <PropertyColumn Property="c => c.User.Name" Title="Кем добавлен" />
     <ActionColumn Title="Действия">
-        <a @onclick="() => ViewReport(context)"><Icon Type="arrow-right" Width="2em" Height="2em" /></a>
+        <a @onclick="() => ViewReport(context.ReportId)"><Icon Type="arrow-right" Width="2em" Height="2em" /></a>
 @*         <a @onclick="() => DeleteReport(context.ReportId)"><Icon Type="delete" Height="2em" Width="2em" /></a> *@
     </ActionColumn>
 </Table>
@@ -80,12 +81,12 @@
 
     private void AddReport()
     {
-        // переход на страницу создания отчёта
+        Navigation.NavigateTo("AddReport");
     }
 
-    private void ViewReport(Report report)
+    private void ViewReport(int reportId)
     {
-        // просмотр отчёта
+        Navigation.NavigateTo($"ViewReport/{reportId}");
     }
 
     // private async Task DeleteReport(int reportId)

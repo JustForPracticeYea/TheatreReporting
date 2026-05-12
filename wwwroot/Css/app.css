@@ -54,7 +54,11 @@ h1:focus {
     border-color: #929292;
 }
 
-/*Заголовок страницы*/
+.ant-table-content {
+    width: 70%;
+    justify-self: center;
+}
+
 .ant-page-header {
     box-sizing: border-box;
     margin: 0;
@@ -384,4 +388,14 @@ h1:focus {
 }
 .hide-timepicker-footer .ant-picker-footer {
     display: none;
+}
+
+.form-container-reports {
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #D9D5BA;
+    border-radius: 15px;
+    margin: 20px auto;
+    max-width: 85%;
 }
