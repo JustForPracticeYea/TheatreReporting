@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using TheatreReportingApp.Models.Enums;
 
 namespace TheatreReportingApp.Models
 {
@@ -14,10 +15,8 @@ namespace TheatreReportingApp.Models
         public string TownName { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
-        [MinLength(3, ErrorMessage = "Минимум 3 символа")]
-        [MaxLength(20, ErrorMessage = "Максимум 20 символов")]
         [Display(Name = "Тип населенного пункта")]
-        public string SettlementType { get; set; }
+        public SettlementType SettlementType { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
         [MinLength(3, ErrorMessage = "Минимум 3 символа")]

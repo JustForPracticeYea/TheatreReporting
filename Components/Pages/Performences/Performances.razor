@@ -6,6 +6,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using System.Globalization
 @using TheatreReportingApp.Models
+@using TheatreReportingApp.Models.Enums
 @inject ModalService ModalService;
 @inject ConfirmService ComfirmService;
 @inject TheatreDbContext _context;
@@ -33,7 +34,17 @@
 
 <Table @ref="_performanceTable" TItem="Performance" PageSize="10" Total="_performanceTotal" DataSource="_performanceDataSource" OnChange="OnPerformanceChange">
     <PropertyColumn Property="p => p.PerformanceNumber"></PropertyColumn>
-    <PropertyColumn Property="p => p.Type"></PropertyColumn>
+    <PropertyColumn Property="p => p.Type">
+        <Template>
+            @(context.Type switch
+            {
+                PerformanceType.Stationary => "Стационар",
+                PerformanceType.OnSite => "Выезд",
+                PerformanceType.Tour => "Гастроль",
+                _ => context.Type.ToString()
+            })
+        </Template>
+    </PropertyColumn>
     <PropertyColumn Property="p => p.EventDateTime" Format="dd-MM-yyyy"></PropertyColumn>
     <ActionColumn>
         <a @onclick="() => EditPerformance(context.PerformanceId)"><Icon Type="form" Height="2em" Width="2em" /></a>

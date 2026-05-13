@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TheatreReportingApp.Models;
 
@@ -10,9 +11,11 @@ using TheatreReportingApp.Models;
 namespace TheatreReportingApp.Migrations
 {
     [DbContext(typeof(TheatreDbContext))]
-    partial class TheatreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260513125521_UpdateReport")]
+    partial class UpdateReport
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.25");
@@ -442,7 +445,7 @@ namespace TheatreReportingApp.Migrations
 
             modelBuilder.Entity("TheatreReportingApp.Models.PerformanceViewerCategory", b =>
                 {
-                    b.Property<int>("PerformanceViewerCategoryId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
@@ -455,7 +458,7 @@ namespace TheatreReportingApp.Migrations
                     b.Property<int>("ViewerCount")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("PerformanceViewerCategoryId");
+                    b.HasKey("Id");
 
                     b.HasIndex("PerformanceId");
 
@@ -676,7 +679,7 @@ namespace TheatreReportingApp.Migrations
 
             modelBuilder.Entity("TheatreReportingApp.Models.ViewerCategory", b =>
                 {
-                    b.Property<int>("ViewerCategoryId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
@@ -684,7 +687,7 @@ namespace TheatreReportingApp.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.HasKey("ViewerCategoryId");
+                    b.HasKey("Id");
 
                     b.ToTable("ViewerCategories");
                 });

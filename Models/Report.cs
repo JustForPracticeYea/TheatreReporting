@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using TheatreReportingApp.Models.Enums;
 
 namespace TheatreReportingApp.Models
 {
@@ -13,11 +14,21 @@ namespace TheatreReportingApp.Models
         [MaxLength(150, ErrorMessage = "Максимум 150 символов")]
         public string Title { get; set; }
 
+        [Display(Name = "Тип отчета")]
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
-        public string Type { get; set; }
+        public ReportType Type { get; set; }
 
+        [Display(Name = "Дата создания отчета")]
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
         public DateTime CreatedDate { get; set; }
+
+        [Display(Name = "Дата начала отчета")]
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        public DateTime FromPeriod { get; set; }
+
+        [Display(Name = "Дата конца отчета")]
+        [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
+        public DateTime ToPeriod { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
         public string Content { get; set; }

@@ -6,6 +6,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using TheatreReportingApp.Models
 @using Microsoft.EntityFrameworkCore
+@using TheatreReportingApp.Models.Enums
 @inject NavigationManager Navigation
 @inject TheatreDbContext _context
 @attribute [Authorize]
@@ -24,7 +25,21 @@
 
 <Table @ref="_table" TItem="Report" PageSize="10" Total="_total" DataSource="_dataSource" OnChange="OnChange">
     <PropertyColumn Property="c => c.Title" Title="Название"/>
-    <PropertyColumn Property="c => c.Type" Title="Тип отчёта" />
+    <PropertyColumn Property="p => p.Type" Title="Тип">
+            <Template>
+        @(context.Type switch
+        {
+            ReportType.Performances => "Спектакли",
+            ReportType.Authors => "Авторы",
+            _ => context.Type.ToString()
+        })
+    </Template>
+    </PropertyColumn>
+    <PropertyColumn Property="c => c.FromPeriod" Title="Период отчета">
+        <Template>
+            @($"С {context.FromPeriod:dd.MM.yyyy} по {context.ToPeriod:dd.MM.yyyy}")
+        </Template>
+    </PropertyColumn>
     <PropertyColumn Property="c => c.CreatedDate" Title="Дата создания" Format="dd.MM.yyyy"/>
     <PropertyColumn Property="c => c.User.Name" Title="Кем добавлен" />
     <ActionColumn Title="Действия">

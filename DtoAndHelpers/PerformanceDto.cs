@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using TheatreReportingApp.Models;
+using TheatreReportingApp.Models.Enums;
 
 namespace TheatreReportingApp.DtoAndHelpers
 {
@@ -13,10 +14,8 @@ namespace TheatreReportingApp.DtoAndHelpers
         public int PerformanceNumber { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
-        [MinLength(3, ErrorMessage = "Минимум 3 символа")]
-        [MaxLength(100, ErrorMessage = "Максимум 100 символов")]
         [Display(Name = "Тип спектакля")]
-        public string Type { get; set; }
+        public PerformanceType Type { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
         public DateTime SelectedDate { get; set; } = DateTime.Now;
@@ -237,7 +236,7 @@ namespace TheatreReportingApp.DtoAndHelpers
 
         //
 
-        public string? SettlementType { get; set; }
+        public SettlementType SettlementType { get; set; }
         public string? OnSiteTownName { get; set; }
         public string? Region { get; set; }
         public string? TourType { get; set; }

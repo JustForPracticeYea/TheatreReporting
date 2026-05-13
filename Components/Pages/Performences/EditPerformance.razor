@@ -3,6 +3,7 @@
 @using System.Globalization
 @using TheatreReportingApp.DtoAndHelpers
 @using TheatreReportingApp.Models
+@using TheatreReportingApp.Models.Enums
 @inject TheatreDbContext _context
 @inject NavigationManager Navigation
 
@@ -22,16 +23,16 @@
                 <div class="col-md-6">
                     <div class="form-group mb-3">
                         <label>Тип проведения</label>
-                        <InputSelect class="form-control" @bind-Value="performanceDto.Type" @onchange="OnTypeChanged">
-                            <option value="Стационар">Стационар</option>
-                            <option value="Выезд">Выезд</option>
-                            <option value="Гастроль">Гастроли</option>
+                        <InputSelect class="form-control" @bind-Value="performanceDto.Type">
+                            <option value="Stationary">Стационар</option>
+                            <option value="OnSite">Выезд</option>
+                            <option value="Tour">Гастроли</option>
                         </InputSelect>
                     </div>
                 </div>
             </div>
 
-            @if (performanceDto.Type == "Стационар")
+            @if (performanceDto.Type == PerformanceType.Stationary)
             {
                 <div class="form-group mb-3">
                     <label>Место проведения</label>
@@ -44,15 +45,15 @@
                 </div>
             }
 
-            @if (performanceDto.Type == "Выезд")
+            @if (performanceDto.Type == PerformanceType.OnSite)
             {
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group mb-3">
                             <label>Тип населенного пункта</label>
                             <InputSelect class="form-control" @bind-Value="performanceDto.SettlementType">
-                                <option value="Город">Город</option>
-                                <option value="Село">Село</option>
+                                <option value="City">Город</option>
+                                <option value="Village">Село</option>
                             </InputSelect>
                         </div>
                     </div>
@@ -79,7 +80,7 @@
                 </div>
             }
 
-            @if (performanceDto.Type == "Гастроль")
+            @if (performanceDto.Type == PerformanceType.Tour)
             {
                 <div class="form-group mb-3">
                     <label>Тип гастролей</label>
@@ -541,7 +542,7 @@
                                             <option value="0" disabled selected>Выберите категорию</option>
                                             @foreach (var vc in viewerCategoriesList)
                                             {
-                                                <option value="@vc.Id">@vc.CategoryName</option>
+                                                <option value="@vc.ViewerCategoryId">@vc.CategoryName</option>
                                             }
                                         </InputSelect>
                                     </div>
@@ -678,6 +679,8 @@
                 performanceDto.SettlementType = onSite.SettlementType;
             }
         }
+        else
+            performanceDto.SettlementType = SettlementType.City;
         if (performance.TourId != null)
         {
             var tour = await _context.TourLocations.FindAsync(performance.TourId);
@@ -702,13 +705,6 @@
         performanceViewerCategories.Remove(category);
     }
 
-    private void OnTypeChanged(ChangeEventArgs e)
-    {
-        performanceDto.Type = e.Value?.ToString();
-        performanceDto.StationaryId = null;
-        performanceDto.OnSiteId = null;
-        performanceDto.TourId = null;
-    }
     private void OnTourTypeChanged(ChangeEventArgs e)
     {
         performanceDto.TourType = e.Value?.ToString();
@@ -724,7 +720,7 @@
 
             onSiteNameOptions = all
                 .Where(l => l.TownName.ToLower().StartsWith(lower))
-                .Select(l => l.TownName + ", " + l.Region + " (" + l.SettlementType + ")")
+                .Select(l => l.TownName + ", " + l.Region + " (" + (l.SettlementType == SettlementType.City ? "Город" : "Село") + ")")
                 .Distinct()
                 .Take(10)
                 .ToList();
@@ -764,7 +760,7 @@
         {
             performanceDto.OnSiteTownName = parts[0].Trim();
             performanceDto.Region = parts[1].Split('(')[0].Trim();
-            performanceDto.SettlementType = value.Contains("(Город)") ? "Город" : "Село";
+            performanceDto.SettlementType = value.Contains("(Город)") ? SettlementType.City : SettlementType.Village;
         }
     }
 
@@ -858,9 +854,7 @@
     private async void OnCountrySelected(string value)
     {
         performanceDto.Country = value;
-        var lower = value.ToLower();
-        var loc = await _context.TourLocations
-            .FirstOrDefaultAsync(l => l.Country.ToLower() == lower);
+        var loc = await _context.TourLocations.FirstOrDefaultAsync(l => EF.Functions.Like(l.Country, value));
         if (loc != null)
         {
             performanceDto.TourTownName = loc.TownName;
@@ -876,28 +870,40 @@
             performance.Type = performanceDto.Type;
             performance.EventDateTime = eventDateTime;
 
-            performance.StationaryId = performanceDto.Type == "Стационар" ? performanceDto.StationaryId : null;
+            performance.StationaryId = performanceDto.Type == PerformanceType.Stationary ? performanceDto.StationaryId : null;
             performance.OnSiteId = null;
             performance.TourId = null;
 
-            if (performanceDto.Type == "Выезд" && !string.IsNullOrWhiteSpace(performanceDto.OnSiteTownName))
+            if (performanceDto.Type == PerformanceType.OnSite && !string.IsNullOrWhiteSpace(performanceDto.OnSiteTownName))
             {
                 var loc = await _context.OnSiteLocations.FirstOrDefaultAsync(l => l.TownName == performanceDto.OnSiteTownName && l.SettlementType == performanceDto.SettlementType);
                 if (loc == null)
                 {
-                    loc = new OnSiteLocation { TownName = performanceDto.OnSiteTownName, SettlementType = performanceDto.SettlementType, Region = performanceDto.Region };
+                    loc = new OnSiteLocation 
+                    { 
+                        TownName = performanceDto.OnSiteTownName, 
+                        SettlementType = performanceDto.SettlementType, 
+                        Region = performanceDto.Region 
+                    };
                     _context.OnSiteLocations.Add(loc);
                     await _context.SaveChangesAsync();
                 }
                 performance.OnSiteId = loc?.OnSiteId;
             }
-            else if (performanceDto.Type == "Гастроль" && !string.IsNullOrWhiteSpace(performanceDto.TourTownName))
+            else if (performanceDto.Type == PerformanceType.Tour && !string.IsNullOrWhiteSpace(performanceDto.TourTownName))
             {
                 var country = performanceDto.TourType == "Home" ? "Россия" : performanceDto.Country;
-                var loc = await _context.TourLocations.FirstOrDefaultAsync(l => l.TownName == performanceDto.TourTownName && l.Country == country);
+                var loc = await _context.TourLocations.FirstOrDefaultAsync(l =>
+                    EF.Functions.Like(l.TownName, performanceDto.TourTownName) &&
+                    EF.Functions.Like(l.Country, country));
                 if (loc == null)
                 {
-                    loc = new TourLocation { TownName = performanceDto.TourTownName, Country = country }; _context.TourLocations.Add(loc);
+                    loc = new TourLocation 
+                    {
+                        TownName = performanceDto.TourTownName, 
+                        Country = country 
+                    }; 
+                    _context.TourLocations.Add(loc);
                     await _context.SaveChangesAsync();
                 }
                 performance.TourId = loc?.TourId;

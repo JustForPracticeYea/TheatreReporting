@@ -22,5 +22,7 @@ namespace TheatreReportingApp.Models
         [MaxLength(100, ErrorMessage = "Максимум 100 символов")]
         [DisplayName("Отчество")]
         public string? Fathername { get; set; }
+
+        public bool? IsDelete { get; set; }
     }
 }

@@ -6,7 +6,7 @@ namespace TheatreReportingApp.Models
     public class PerformanceViewerCategory
     {
         [Key]
-        public int Id { get; set; }
+        public int PerformanceViewerCategoryId { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
         [Display(Name = "Количество зрителей")]

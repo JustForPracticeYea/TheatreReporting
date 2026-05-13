@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using TheatreReportingApp.Models.Enums;
 
 namespace TheatreReportingApp.Models
 {
@@ -16,7 +17,7 @@ namespace TheatreReportingApp.Models
         [MinLength(3, ErrorMessage = "Минимум 3 символа")]
         [MaxLength(100, ErrorMessage = "Максимум 100 символов")]
         [Display(Name = "Тип спектакля")]
-        public string Type { get; set; }
+        public PerformanceType Type { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
         [Display(Name = "Дата проведения спектакля")]

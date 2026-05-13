@@ -1,8 +1,9 @@
 ﻿@page "/AddReport"
 @using Microsoft.AspNetCore.Authorization
-@using TheatreReportingApp.DtoAndHelpers
 @using TheatreReportingApp.Models
+@using TheatreReportingApp.DtoAndHelpers
 @using Microsoft.EntityFrameworkCore
+@using TheatreReportingApp.Models.Enums
 @rendermode InteractiveServer
 @inject TheatreDbContext _context
 @inject NavigationManager Navigation
@@ -19,24 +20,24 @@
         <div class="form-group mb-3">
             <label>Тип отчёта</label>
             <InputSelect class="form-control" @bind-Value="@report.Type">
-                <option value="Спектакли">По спектаклям</option>
-                <option value="Авторы">По авторам</option>
+                <option value="Performances">По спектаклям</option>
+                <option value="Authors">По авторам</option>
             </InputSelect>
         </div>
 
-        @if (report.Type == "Спектакли")
+        @if (report.Type == ReportType.Performances)
         {
             <div class="form-group mb-3">
                 <label>Категория</label>
                 <InputSelect class="form-control" @bind-Value="@performanceFilter">
-                    <option value="Все">По всем</option>
-                    <option value="Стационар">Стационар</option>
-                    <option value="Выезд">Выезд</option>
-                    <option value="Гастроль">Гастроли</option>
+                    <option value="All">По всем</option>
+                    <option value="Stationary">Стационар</option>
+                    <option value="OnSite">Выезд</option>
+                    <option value="Tour">Гастроли</option>
                 </InputSelect>
             </div>
 
-            @if (performanceFilter == "Стационар")
+            @if (performanceFilter == PerformanceFilterType.Stationary)
             {
                 <div class="form-group mb-3">
                     <label>Площадки</label>
@@ -50,28 +51,26 @@
                 </div>
             }
 
-            @if (performanceFilter == "Выезд")
+            @if (performanceFilter == PerformanceFilterType.OnSite)
             {
                 <div class="form-group mb-3">
                     <label>Тип населённого пункта</label>
                     <InputSelect class="form-control" @bind-Value="@onsiteFilter">
-                        <option value="Все">По всем</option>
-                        @foreach (var type in onsiteTypes)
-                        {
-                            <option value="@type">@type</option>
-                        }
+                        <option value="All">По всем</option>
+                        <option value="City">Город</option>
+                        <option value="Village">Село</option>
                     </InputSelect>
                 </div>
             }
 
-            @if (performanceFilter == "Гастроль")
+            @if (performanceFilter == PerformanceFilterType.Tour)
             {
                 <div class="form-group mb-3">
                     <label>Тип гастролей</label>
                     <InputSelect class="form-control" @bind-Value="@tourFilter">
-                        <option value="Все">По всем</option>
-                        <option value="Россия">По России</option>
-                        <option value="Зарубеж">Зарубеж</option>
+                        <option value="All">По всем</option>
+                        <option value="Domestic">По России</option>
+                        <option value="International">Зарубеж</option>
                     </InputSelect>
                 </div>
             }
@@ -81,36 +80,18 @@
             <label>Дата, с которой формируется отчёт</label>
             <AntDesign.DatePicker class="form-control w-50"
                                   CultureInfo="@System.Globalization.CultureInfo.GetCultureInfo("ru-Ru")"
-                                  @bind-Value="@report.CreatedDate" />
+                                  @bind-Value="@report.FromPeriod" />
         </div>
 
         <div class="form-group mb-3">
             <label>Период</label>
             <div class="d-flex flex-wrap gap-2 mb-2">
-                <Button Type="@(selectedPeriod == "12M" ? ButtonType.Primary : ButtonType.Default)"
-                        OnClick="@(() => SetPeriod("12M"))">
-                    1 год
-                </Button>
-                <Button Type="@(selectedPeriod == "9M" ? ButtonType.Primary : ButtonType.Default)"
-                        OnClick="@(() => SetPeriod("9M"))">
-                    9 мес
-                </Button>
-                <Button Type="@(selectedPeriod == "6M" ? ButtonType.Primary : ButtonType.Default)"
-                        OnClick="@(() => SetPeriod("6M"))">
-                    6 мес
-                </Button>
-                <Button Type="@(selectedPeriod == "3M" ? ButtonType.Primary : ButtonType.Default)"
-                        OnClick="@(() => SetPeriod("3M"))">
-                    3 мес
-                </Button>
-                <Button Type="@(selectedPeriod == "1M" ? ButtonType.Primary : ButtonType.Default)"
-                        OnClick="@(() => SetPeriod("1M"))">
-                    1 мес
-                </Button>
-                <Button Type="@(selectedPeriod == "Custom" ? ButtonType.Primary : ButtonType.Default)"
-                        OnClick="@(() => SetPeriod("Custom"))">
-                    Другое
-                </Button>
+                <Button Type="@(selectedPeriod == "12M" ? ButtonType.Primary : ButtonType.Default)" OnClick="@(() => SetPeriod("12M"))">1 год</Button>
+                <Button Type="@(selectedPeriod == "9M" ? ButtonType.Primary : ButtonType.Default)" OnClick="@(() => SetPeriod("9M"))">9 мес</Button>
+                <Button Type="@(selectedPeriod == "6M" ? ButtonType.Primary : ButtonType.Default)" OnClick="@(() => SetPeriod("6M"))">6 мес</Button>
+                <Button Type="@(selectedPeriod == "3M" ? ButtonType.Primary : ButtonType.Default)" OnClick="@(() => SetPeriod("3M"))">3 мес</Button>
+                <Button Type="@(selectedPeriod == "1M" ? ButtonType.Primary : ButtonType.Default)" OnClick="@(() => SetPeriod("1M"))">1 мес</Button>
+                <Button Type="@(selectedPeriod == "Custom" ? ButtonType.Primary : ButtonType.Default)" OnClick="@(() => SetPeriod("Custom"))">Другое</Button>
             </div>
         </div>
 
@@ -120,17 +101,13 @@
                 <div class="col-md-6">
                     <div class="form-group mb-3">
                         <label>С даты</label>
-                        <AntDesign.DatePicker class="form-control"
-                                              CultureInfo="@System.Globalization.CultureInfo.GetCultureInfo("ru-Ru")"
-                                              @bind-Value="@customStartDate" />
+                        <AntDesign.DatePicker class="form-control" CultureInfo="@System.Globalization.CultureInfo.GetCultureInfo("ru-Ru")" @bind-Value="@customStartDate" />
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-group mb-3">
                         <label>По дату</label>
-                        <AntDesign.DatePicker class="form-control"
-                                              CultureInfo="@System.Globalization.CultureInfo.GetCultureInfo("ru-Ru")"
-                                              @bind-Value="@customEndDate" />
+                        <AntDesign.DatePicker class="form-control" CultureInfo="@System.Globalization.CultureInfo.GetCultureInfo("ru-Ru")" @bind-Value="@customEndDate" />
                     </div>
                 </div>
             </div>
@@ -141,9 +118,7 @@
         </div>
 
         <div class="form-group mt-3">
-            <Button Type="@ButtonType.Primary" OnClick="@GenerateReport" Loading="@_isGenerating">
-                Сформировать отчёт
-            </Button>
+            <Button Type="@ButtonType.Primary" OnClick="@GenerateReport" Loading="@_isGenerating">Сформировать отчёт</Button>
             <Button OnClick="@Cancel" Class="ms-2">Отмена</Button>
         </div>
     </div>
@@ -153,29 +128,30 @@
     private Report report = new()
     {
         Title = $"Отчёт от {DateTime.Now:dd.MM.yyyy}",
-        Type = "Спектакли",
-        CreatedDate = DateTime.Now
+        Type = ReportType.Performances,
+        CreatedDate = DateTime.Now,
+        FromPeriod = DateTime.Now,
+        ToPeriod = DateTime.Now.AddMonths(1)
     };
     private string selectedPeriod = "1M";
     private DateTime customStartDate = DateTime.Now;
     private DateTime customEndDate = DateTime.Now.AddMonths(1);
     private bool _isGenerating;
 
-    private string performanceFilter = "Все";
+    private PerformanceFilterType performanceFilter = PerformanceFilterType.All;
+    private TourFilterType tourFilter = TourFilterType.All;
     private string stationaryFilter = "Все";
-    private string onsiteFilter = "Все";
-    private string tourFilter = "Все";
     private List<string> stationaryLocations = new();
-    private List<string> onsiteTypes = new() { "Город", "Село" };
+    private OnSiteFilterType onsiteFilter = OnSiteFilterType.All;
 
-    private DateTime startDate => selectedPeriod == "Custom" ? customStartDate : report.CreatedDate;
+    private DateTime startDate => selectedPeriod == "Custom" ? customStartDate : report.FromPeriod;
     private DateTime endDate => selectedPeriod switch
     {
-        "1M" => report.CreatedDate.AddMonths(1),
-        "3M" => report.CreatedDate.AddMonths(3),
-        "6M" => report.CreatedDate.AddMonths(6),
-        "9M" => report.CreatedDate.AddMonths(9),
-        "12M" => report.CreatedDate.AddMonths(12),
+        "1M" => CalculateEndDate(1),
+        "3M" => CalculateEndDate(3),
+        "6M" => CalculateEndDate(6),
+        "9M" => CalculateEndDate(9),
+        "12M" => CalculateEndDate(12),
         _ => customEndDate
     };
 
@@ -184,7 +160,16 @@
         stationaryLocations = await _context.StationarLocations.Select(s => s.LocationName).Distinct().ToListAsync();
     }
 
-    private void SetPeriod(string period) => selectedPeriod = period;
+    private DateTime CalculateEndDate(int months)
+    {
+        var endDate = startDate.AddMonths(months);
+        return startDate.Day == 1 ? endDate.AddDays(-1) : endDate;
+    }
+
+    private void SetPeriod(string period)
+    { 
+        selectedPeriod = period; 
+    }
 
     private string GetPeriodDescription() => selectedPeriod switch
     {
@@ -199,29 +184,25 @@
     private async Task GenerateReport()
     {
         _isGenerating = true;
+        report.ToPeriod = endDate;
 
         var metadata = new
         {
-            type = report.Type,
-            performanceFilter,
+            performanceFilter = performanceFilter.ToString(),
             stationaryFilter,
             onsiteFilter,
-            tourFilter,
-            period = new { from = startDate, to = endDate }
+            tourFilter = tourFilter.ToString(),
         };
 
         var content = new Dictionary<string, object> { ["metadata"] = metadata };
 
-        if (report.Type == "Спектакли")
+        if (report.Type == ReportType.Performances)
             content["data"] = await GetPerformancesData();
-        else if (report.Type == "Авторы")
+        else if (report.Type == ReportType.Authors)
             content["data"] = await GetAuthorsData();
 
         report.Content = System.Text.Json.JsonSerializer.Serialize(content,
-            new System.Text.Json.JsonSerializerOptions 
-            { 
-                WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping 
-            });
+            new System.Text.Json.JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
 
         report.UserId = _context.Users.Select(u => u.Id).FirstOrDefault();
         _context.Reports.Add(report);
@@ -233,37 +214,39 @@
 
     private async Task<PlayReportDataContainer> GetPerformancesData()
     {
-        var query = _context.Performances.Where(p => p.EventDateTime >= startDate && p.EventDateTime < endDate);
+        var query = _context.Performances.Where(p => p.EventDateTime >= startDate && p.EventDateTime <= endDate);
 
         query = performanceFilter switch
         {
-            "Стационар" => query.Where(p => p.Type == "Стационар"),
-            "Выезд" => query.Where(p => p.Type == "Выезд"),
-            "Гастроль" => query.Where(p => p.Type == "Гастроль"),
+            PerformanceFilterType.Stationary => query.Where(p => p.Type == PerformanceType.Stationary),
+            PerformanceFilterType.OnSite => query.Where(p => p.Type == PerformanceType.OnSite),
+            PerformanceFilterType.Tour => query.Where(p => p.Type == PerformanceType.Tour),
             _ => query
         };
 
-        if (performanceFilter == "Стационар" && stationaryFilter != "Все") 
+        if (performanceFilter == PerformanceFilterType.Stationary && stationaryFilter != "Все")
             query = query.Where(p => p.Stationary.LocationName == stationaryFilter);
 
-        if (performanceFilter == "Выезд" && onsiteFilter != "Все") 
-            query = query.Where(p => p.OnSite.SettlementType == onsiteFilter);
+        if (performanceFilter == PerformanceFilterType.OnSite && onsiteFilter != OnSiteFilterType.All)
+            query = query.Where(p => p.OnSite.SettlementType.ToString() == onsiteFilter.ToString());
 
-        if (performanceFilter == "Гастроль" && tourFilter != "Все")
-            query = tourFilter == "Россия" ? query.Where(p => p.Tour.Country == "Россия") : query.Where(p => p.Tour.Country != "Россия");
+        if (performanceFilter == PerformanceFilterType.Tour && tourFilter != TourFilterType.All)
+            query = tourFilter == TourFilterType.Domestic ? query.Where(p => p.Tour.Country == "Россия") : query.Where(p => p.Tour.Country != "Россия");
 
         var performances = await query.Include(p => p.Play)
                                       .Include(p => p.PerformanceViewerCategories)
-                                           .ThenInclude(v => v.ViewerCategory)
-                                       .ToListAsync();
+                                        .ThenInclude(v => v.ViewerCategory)
+                                      .ToListAsync();
+
         var allPlays = await _context.Plays.OrderBy(p => p.Title).ToListAsync();
 
-        var freeCategories = performances.SelectMany(p => p.PerformanceViewerCategories).GroupBy(v => v.ViewerCategory.CategoryName)
-            .Select(g => new FreeCategoryData 
-            { 
-                Category = g.Key, 
-                Count = g.Sum(v => v.ViewerCount) 
-            }).ToList();
+        var freeCategories = performances.SelectMany(p => p.PerformanceViewerCategories)
+                                         .GroupBy(v => v.ViewerCategory.CategoryName)
+                                         .Select(g => new FreeCategoryData
+                                         {
+                                             Category = g.Key,
+                                             Count = g.Sum(v => v.ViewerCount)
+                                         }).ToList();
 
         return new PlayReportDataContainer
         {
@@ -296,18 +279,12 @@
     private async Task<List<AuthorReportData>> GetAuthorsData()
     {
         var performances = await _context.Performances.Where(p => p.EventDateTime >= startDate && p.EventDateTime < endDate)
-                                                      .Include(p => p.Play)
-                                                        .ThenInclude(p => p.PlayAuthors)
-                                                        .ThenInclude(pa => pa.Authors)
-                                                      .ToListAsync();
+            .Include(p => p.Play).ThenInclude(p => p.PlayAuthors).ThenInclude(pa => pa.Authors).ToListAsync();
 
-        return performances.SelectMany(p => p.Play.PlayAuthors)
-        .GroupBy(pa => pa.Authors)
-        .Select(g => new AuthorReportData
+        return performances.SelectMany(p => p.Play.PlayAuthors).GroupBy(pa => pa.Authors).Select(g => new AuthorReportData
         {
             Author = $"{g.Key.AuthorSurname} {g.Key.AuthorName} {g.Key.AuthorFathername}",
-            TotalRoyalty = g.Sum(pa => performances.Where(p => p.PlayId == pa.PlayId)
-                .Sum(p => (p.RealAmountTickSoldInOffice + p.RealAmountTickSoldInOnline) * pa.RoyaltyPercentage / 100))
+            TotalRoyalty = g.Sum(pa => performances.Where(p => p.PlayId == pa.PlayId).Sum(p => (p.RealAmountTickSoldInOffice + p.RealAmountTickSoldInOnline) * pa.RoyaltyPercentage / 100))
         }).ToList();
     }
 

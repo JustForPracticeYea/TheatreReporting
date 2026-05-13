@@ -4,6 +4,7 @@
 @using TheatreReportingApp.Models
 @using TheatreReportingApp.DtoAndHelpers
 @using Microsoft.EntityFrameworkCore
+@using TheatreReportingApp.Models.Enums
 @rendermode InteractiveServer
 @inject TheatreDbContext _context
 @inject NavigationManager Navigation
@@ -18,12 +19,19 @@ else
     <PageHeader Class="site-page-header" Title="@report.Title" />
 
     <div class="mb-3">
-        <p><strong>Тип:</strong> @report.Type</p>
-        <p><strong>Период:</strong> @periodFrom.ToString("dd.MM.yyyy") — @periodTo.ToString("dd.MM.yyyy")</p>
+        <p>
+            <strong>Тип:</strong> @(report.Type switch
+            {
+                ReportType.Performances => "По спектаклям",
+                ReportType.Authors => "По авторам",
+                _ => report.Type.ToString()
+            })
+        </p>
+        <p><strong>Период:</strong> @report.FromPeriod.ToString("dd.MM.yyyy") — @report.ToPeriod.ToString("dd.MM.yyyy")</p>
         <p><strong>Дата создания:</strong> @report.CreatedDate.ToString("dd.MM.yyyy HH:mm")</p>
     </div>
 
-    @if (report.Type == "Спектакли")
+    @if (report.Type == ReportType.Performances)
     {
         <div class="mb-3">
             <Button OnClick="@ExportToExcel">
@@ -31,66 +39,68 @@ else
             </Button>
             <Button OnClick="@GoBack" Class="ms-2">Назад</Button>
         </div>
-    <div class="form-container-reports">
-        <div class="form-wrapper">
-            <div class="card mb-3">
-                <div class="card-header bg-card-header"><h5 class="mb-0 text-white">Сводка по спектаклям</h5></div>
-                <div class="card-body p-0 report-table">
-                    <Table  TItem="PlayReportData" DataSource="@playsData" PageSize="20">
-                        <PropertyColumn Property="c => c.PlayTitle" Title="Название" />
-                        <PropertyColumn Property="c => c.PerformanceCount" Title="Кол-во концертов" />
-                        <PropertyColumn Property="c => c.TotalAudience" Title="Обслужено зрителей" />
-                        <PropertyColumn Property="c => c.GrossRevenue" Title="Валовая сумма сбора" />
-                        <PropertyColumn Property="c => c.RealRevenue" Title="Полученная сумма" />
-                        <PropertyColumn Property="c => c.Transferred" Title="Перечислено" />
-                    </Table>
-                </div>
-            </div>
-
-            <div class="card mb-3">
-                <div class="card-header bg-card-header"><h5 class="mb-0 text-white">Общие итоги</h5></div>
-                <div class="card-body">
-                    <div class="row mb-2">
-                        <div class="col-md-3"><strong>Кол-во концертов</strong></div>
-                        <div class="col-md-3"><strong>Обслужено зрителей</strong></div>
-                        <div class="col-md-3"><strong>Обслужено зрителей бесплатно</strong></div>
-                        <div class="col-md-3"><strong>Перечислено</strong></div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3">@totalData?.TotalPerformances</div>
-                        <div class="col-md-3">@totalData?.TotalAudience</div>
-                        <div class="col-md-3">@totalData?.TotalFreeAudience</div>
-                        <div class="col-md-3">@totalData?.TotalTransferred.ToString("N0") ₽</div>
-                    </div>
-                    <div class="row mb-2">
-                        <div class="col-md-6"><strong>Валовая сумма сбора</strong></div>
-                        <div class="col-md-6"><strong>Полученная сумма</strong></div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">@totalData?.GrossRevenue.ToString("N0") ₽</div>
-                        <div class="col-md-6">@totalData?.RealRevenue.ToString("N0") ₽</div>
-                    </div>
-                </div>
-            </div>
-
-            @if (freeCategories.Any())
-            {
+        <div class="form-container-reports">
+            <div class="form-wrapper">
                 <div class="card mb-3">
                     <div class="card-header bg-card-header">
-                        <h5 class="mb-0 text-white">Бесплатно обслуженые зрители по категориям</h5>
+                        <h5 class="mb-0 text-white">Сводка по спектаклям</h5>
                     </div>
                     <div class="card-body p-0 report-table">
-                        <Table TItem="FreeCategoryData" DataSource="@freeCategories" PageSize="10">
-                            <PropertyColumn Property="c => c.Category" Title="Категория" />
-                            <PropertyColumn Property="c => c.Count" Title="Количество" />
+                        <Table TItem="PlayReportData" DataSource="@playsData" PageSize="20">
+                            <PropertyColumn Property="c => c.PlayTitle" Title="Название" />
+                            <PropertyColumn Property="c => c.PerformanceCount" Title="Кол-во концертов" />
+                            <PropertyColumn Property="c => c.TotalAudience" Title="Обслужено зрителей" />
+                            <PropertyColumn Property="c => c.GrossRevenue" Title="Валовая сумма сбора" />
+                            <PropertyColumn Property="c => c.RealRevenue" Title="Полученная сумма" />
+                            <PropertyColumn Property="c => c.Transferred" Title="Перечислено" />
                         </Table>
                     </div>
                 </div>
-            }
+
+                <div class="card mb-3">
+                    <div class="card-header bg-card-header"><h5 class="mb-0 text-white">Общие итоги</h5></div>
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col-md-3"><strong>Кол-во концертов</strong></div>
+                            <div class="col-md-3"><strong>Обслужено зрителей</strong></div>
+                            <div class="col-md-3"><strong>Обслужено зрителей бесплатно</strong></div>
+                            <div class="col-md-3"><strong>Перечислено</strong></div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-3">@totalData?.TotalPerformances</div>
+                            <div class="col-md-3">@totalData?.TotalAudience</div>
+                            <div class="col-md-3">@totalData?.TotalFreeAudience</div>
+                            <div class="col-md-3">@totalData?.TotalTransferred.ToString("N0") ₽</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-md-6"><strong>Валовая сумма сбора</strong></div>
+                            <div class="col-md-6"><strong>Полученная сумма</strong></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">@totalData?.GrossRevenue.ToString("N0") ₽</div>
+                            <div class="col-md-6">@totalData?.RealRevenue.ToString("N0") ₽</div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (freeCategories.Any())
+                {
+                    <div class="card mb-3">
+                        <div class="card-header bg-card-header">
+                            <h5 class="mb-0 text-white">Бесплатно обслуженые зрители по категориям</h5>
+                        </div>
+                        <div class="card-body p-0 report-table">
+                            <Table TItem="FreeCategoryData" DataSource="@freeCategories" PageSize="10">
+                                <PropertyColumn Property="c => c.Category" Title="Категория" />
+                                <PropertyColumn Property="c => c.Count" Title="Количество" />
+                            </Table>
+                        </div>
+                    </div>
+                }
+            </div>
         </div>
-    </div>
     }
-    else if (report.Type == "Авторы")
+    else if (report.Type == ReportType.Authors)
     {
         <div class="mb-3">
             <Button Type="@ButtonType.Primary" OnClick="@ExportToExcel">
@@ -98,7 +108,7 @@ else
             </Button>
             <Button OnClick="@GoBack" Class="ms-2">Назад</Button>
         </div>
-        
+
         <Table TItem="AuthorReportData" DataSource="@authorsData" PageSize="20">
             <PropertyColumn Property="c => c.Author" Title="Автор" />
             <PropertyColumn Property="c => c.TotalRoyalty" Title="Сумма отчислений (₽)" />
@@ -118,12 +128,9 @@ else
     [Parameter] public int ReportId { get; set; }
 
     private Report? report;
-    private DateTime periodFrom, periodTo;
-
     private PlayReportTotal? totalData;
     private List<PlayReportData> playsData = new();
     private List<FreeCategoryData> freeCategories = new();
-
     private List<AuthorReportData> authorsData = new();
 
     protected override async Task OnInitializedAsync()
@@ -133,15 +140,9 @@ else
 
         using var doc = System.Text.Json.JsonDocument.Parse(report.Content);
         var root = doc.RootElement;
-
-        var meta = root.GetProperty("metadata");
-        var period = meta.GetProperty("period");
-        periodFrom = period.GetProperty("from").GetDateTime();
-        periodTo = period.GetProperty("to").GetDateTime();
-
         var data = root.GetProperty("data");
 
-        if (report.Type == "Спектакли")
+        if (report.Type == ReportType.Performances)
         {
             var container = System.Text.Json.JsonSerializer.Deserialize<PlayReportDataContainer>(data.GetRawText(),
                 new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -150,7 +151,7 @@ else
             playsData = container.Plays;
             freeCategories = totalData.FreeAudienceByCategory;
         }
-        else if (report.Type == "Авторы")
+        else if (report.Type == ReportType.Authors)
         {
             authorsData = System.Text.Json.JsonSerializer.Deserialize<List<AuthorReportData>>(data.GetRawText(),
                 new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
@@ -171,13 +172,13 @@ else
                 var tourFilter = meta.GetProperty("tourFilter").GetString();
                 return performanceFilter switch
                 {
-                    "Стационар" when stationaryFilter == "Все" => "Стационар",
-                    "Стационар" => $"Стационар - {stationaryFilter}",
-                    "Выезд" when onsiteFilter == "Все" => "Выезд",
-                    "Выезд" => $"Выезд - {onsiteFilter}",
-                    "Гастроль" when tourFilter == "Все" => "Гастроли",
-                    "Гастроль" when tourFilter == "Россия" => "Гастроли по России",
-                    "Гастроль" => "Гастроли зарубеж",
+                    "Stationary" when stationaryFilter == "Все" => "Стационар",
+                    "Stationary" => $"Стационар - {stationaryFilter}",
+                    "OnSite" when onsiteFilter == "Все" => "Выезд",
+                    "OnSite" => $"Выезд - {onsiteFilter}",
+                    "Tour" when tourFilter == "All" => "Гастроли",
+                    "Tour" when tourFilter == "Domestic" => "Гастроли по России",
+                    "Tour" => "Гастроли зарубеж",
                     _ => "Спектакли"
                 };
             }
@@ -202,7 +203,7 @@ else
         ws.Range(row, 1, row, 6).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
         row++;
 
-        ws.Range(row, 1, row, 6).Merge().Value = $"ОПЕРАТИВНАЯ СВОДКА за период с {periodFrom:dd.MM.yyyy} по {periodTo:dd.MM.yyyy}";
+        ws.Range(row, 1, row, 6).Merge().Value = $"ОПЕРАТИВНАЯ СВОДКА за период с {report!.FromPeriod:dd.MM.yyyy} по {report.ToPeriod:dd.MM.yyyy}";
         ws.Row(row).Style.Font.SetBold().Font.FontSize = 12;
         ws.Range(row, 1, row, 6).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
         row += 2;
@@ -267,18 +268,11 @@ else
         ws.Column(5).Width = 18;
         ws.Column(6).Width = 15;
 
-        var fileName = $"{report.Title}.xlsx";
         using var stream = new MemoryStream();
         workbook.SaveAs(stream);
-
         var base64 = Convert.ToBase64String(stream.ToArray());
-        var url = $"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{base64}";
-
-        Navigation.NavigateTo(url, true);
+        Navigation.NavigateTo($"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{base64}", true);
     }
 
-    private void GoBack()
-    {
-        Navigation.NavigateTo("/reports");
-    }
+    private void GoBack() => Navigation.NavigateTo("/reports");
 }
