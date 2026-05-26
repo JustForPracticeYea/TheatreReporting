@@ -15,7 +15,7 @@
         <Icon class="search-button" Type="search" />
         <br />
     </div>
-    <a class="add-button" @onclick="() => AddRole()">
+    <a class="add-button" @onclick="() => AddPlay()">
         <Icon Type="plus-square" Width="35px" Height="35px" />
     </a>
 </div>
@@ -137,7 +137,7 @@
         await LoadPlays();
     }
 
-    private void AddRole()
+    private void AddPlay()
     {
         _isModalVisible = true;
     }

@@ -195,7 +195,7 @@ namespace TheatreReportingApp.Models
         public int TotalAmountTickSoldNonCashOfficeOnline { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
-        [Display(Name = "Итговое количество всех реализованных билетов, купленных на кассе театра и через интернет (нал и безнал)")]
+        [Display(Name = "Итоговое количество всех реализованных билетов, купленных на кассе театра и через интернет (нал и безнал)")]
         public int TotalAllNumTickSoldInOfficeOnline { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
@@ -225,7 +225,7 @@ namespace TheatreReportingApp.Models
         public int RemainingRevenue { get; set;}
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]
-        [Display(Name = "Процент реализации")]
+        [Display(Name = "Процент реализации билетов")]
         public double TicketImplementationPercentage { get; set; }
 
         [Required(ErrorMessage = "Данное поле обязательно для заполнения")]

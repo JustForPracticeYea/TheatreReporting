@@ -27,6 +27,9 @@
         <a @onclick="() => AddPerformance()" class="add-button">
             <Icon Type="plus-square" Width="37px" Height="37px" />
         </a>
+        <a @onclick="() => EditPlay()" class="add-button">
+            <Icon Type="form" Width="37px" Height="37px" />
+        </a>
     </div>
 
     <div style="width: 37px;"></div>
@@ -36,13 +39,15 @@
     <PropertyColumn Property="p => p.PerformanceNumber"></PropertyColumn>
     <PropertyColumn Property="p => p.Type">
         <Template>
-            @(context.Type switch
-            {
-                PerformanceType.Stationary => "Стационар",
-                PerformanceType.OnSite => "Выезд",
-                PerformanceType.Tour => "Гастроль",
-                _ => context.Type.ToString()
-            })
+            @(
+                context.Type switch
+                {
+                    PerformanceType.Stationary => "Стационар",
+                    PerformanceType.OnSite => "Выезд",
+                    PerformanceType.Tour => "Гастроль",
+                    _ => context.Type.ToString()
+                }
+                )
         </Template>
     </PropertyColumn>
     <PropertyColumn Property="p => p.EventDateTime" Format="dd-MM-yyyy"></PropertyColumn>
@@ -51,6 +56,8 @@
         <a><Icon Type="delete" Height="2em" Width="2em" /></a>
     </ActionColumn>
 </Table>
+
+<PlayModal @bind-Visible="@_isModalVisible" IsEdit="true" OnSuccess="OnPlayEdited" EditPlay="_editPlay"/>
 
 @code {
     [Parameter]
@@ -61,6 +68,21 @@
     List<Performance> _performanceDataSource = new();
     int _performanceTotal;
     private QueryModel<Performance> _currentPerformanceQuery;
+    private bool _isModalVisible = false;
+    private Play? _editPlay;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPlayData();
+        await LoadPerformanceData();
+    }
+
+    private async Task LoadPlayData()
+    {
+        _editPlay = await _context.Plays
+            .Include(p => p.PlayAuthors)
+            .FirstOrDefaultAsync(p => p.PlayId == PlayId);
+    }
 
     async Task OnPerformanceChange(QueryModel<Performance> query)
     {
@@ -114,5 +136,17 @@
     private void GoBack()
     {
         Navigation.NavigateTo("/Plays");
+    }
+
+    private void EditPlay()
+    {
+        _isModalVisible = true;
+    }
+
+    private async Task OnPlayEdited()
+    {
+        _isModalVisible = false;
+        await LoadPlayData();
+        StateHasChanged();
     }
 }
