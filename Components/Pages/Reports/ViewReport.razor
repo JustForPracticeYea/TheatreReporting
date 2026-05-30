@@ -191,7 +191,8 @@ else
 
     private async Task ExportToExcel()
     {
-        if (totalData == null || !playsData.Any()) return;
+        if (totalData == null || !playsData.Any()) 
+            return;
 
         using var workbook = new XLWorkbook();
         var ws = workbook.Worksheets.Add(excelSheetName);
@@ -272,7 +273,7 @@ else
         workbook.SaveAs(stream);
         var base64 = Convert.ToBase64String(stream.ToArray());
         Navigation.NavigateTo($"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{base64}", true);
-    }
+    }   
 
     private void GoBack() => Navigation.NavigateTo("/reports");
 }

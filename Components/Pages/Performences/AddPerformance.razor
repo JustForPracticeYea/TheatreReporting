@@ -1,6 +1,7 @@
 ﻿@page "/{PlayId:int}/AddPerformance"
 @rendermode InteractiveServer
 @using System.Globalization
+@using ClosedXML.Excel
 @using TheatreReportingApp.DtoAndHelpers
 @using TheatreReportingApp.Models
 @using TheatreReportingApp.Models.Enums
@@ -13,6 +14,16 @@
     <div class="form-wrapper">
         <EditForm Model="@performance" OnValidSubmit="@CreateNewPerformance">
             <DataAnnotationsValidator />
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <Alert Type="AlertType.Error" Message="@errorMessage" Banner Class="mb-3" />
+            }
+
+            <label class="ant-btn ant-btn-dashed mb-3" style="cursor:pointer;">
+                <Icon Type="upload" /> Заполнить из Excel
+                <InputFile OnChange="HandleFileUpload" accept=".xlsx, .xls" style="display:none;" />
+            </label>
 
             <div class="row">
                 <div class="col-md-6">
@@ -614,6 +625,9 @@
     private List<string> tourCityOptions = new();
     private List<string> countryOptions = new();
 
+    private InputFile? fileInput;
+    private string? errorMessage;
+
     protected override async Task OnInitializedAsync()
     {
         performance.Type = PerformanceType.Stationary;
@@ -927,6 +941,68 @@
         }
         await _context.SaveChangesAsync();
         Navigation.NavigateTo($"/performances/{PlayId}");
+    }
+
+    private async Task HandleFileUpload(InputFileChangeEventArgs e)
+    {
+        errorMessage = null;
+        var file = e.File;
+        if (file == null) 
+            return;
+
+        using var memoryStream = new MemoryStream();
+        await file.OpenReadStream().CopyToAsync(memoryStream);
+        memoryStream.Position = 0;
+
+        using var workbook = new XLWorkbook(memoryStream);
+        var ws = workbook.Worksheet(1);
+
+        var fullLine = string.Join(" ", ws.Row(4).CellsUsed().Select(c => c.GetValue<string>()));
+
+        // Проверка названия
+        var titleMatch = System.Text.RegularExpressions.Regex.Match(fullLine, @"^(.+?)\s*\(");
+        if (titleMatch.Success)
+        {
+            var excelTitle = titleMatch.Groups[1].Value.Trim();
+            var currentPlay = await _context.Plays.FindAsync(PlayId);
+
+            if (currentPlay == null || !excelTitle.Equals(currentPlay.Title, StringComparison.OrdinalIgnoreCase))
+            {
+                errorMessage = $"Название в Excel («{excelTitle}») не совпадает с текущим спектаклем («{currentPlay?.Title}»)";
+                StateHasChanged();
+                return;
+            }
+        }
+
+        // Номер мероприятия
+        var numberMatch = System.Text.RegularExpressions.Regex.Match(fullLine, @"№\s*мер-ия\s*(\d+)");
+        if (numberMatch.Success)
+            performance.PerformanceNumber = int.Parse(numberMatch.Groups[1].Value);
+
+        // Время
+        var timeMatch = System.Text.RegularExpressions.Regex.Match(fullLine, @"(\d{2}:\d{2})");
+        if (timeMatch.Success)
+            performance.SelectedTime = DateTime.ParseExact(timeMatch.Groups[1].Value, "HH:mm", null);
+
+        // Дата
+        var dateMatch = System.Text.RegularExpressions.Regex.Match(fullLine, @"(\d{2}\.\d{2}\.\d{4})");
+        if (dateMatch.Success)
+            performance.SelectedDate = DateTime.ParseExact(dateMatch.Groups[1].Value, "dd.MM.yyyy", null);
+
+        // Сцена
+        var sceneMatch = System.Text.RegularExpressions.Regex.Match(fullLine, @"сцена\s*:\s*([^)]+)\)");
+        if (sceneMatch.Success)
+        {
+            var sceneName = sceneMatch.Groups[1].Value.Trim();
+            var loc = stationaryLocations.FirstOrDefault(s => s.LocationName == sceneName);
+            if (loc != null)
+            {
+                performance.StationaryId = loc.StationarId;
+                performance.Type = PerformanceType.Stationary;
+            }
+        }
+
+        StateHasChanged();
     }
 
     private void Cancel()
