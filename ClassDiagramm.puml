@@ -1,0 +1,275 @@
+@startuml ClassDiagramm
+skinparam linetype ortho
+
+class AddPerformance {
+  +PlayId: int
+  -performance: PerformanceDto
+  -viewerCategoriesList: List<ViewerCategory>
+  -performanceViewerCategories: List<PerformanceViewerCategory>
+  -stationaryLocations: List<StationarLocation>
+  -onSiteNameOptions: List<string>
+  -regionOptions: List<string>
+  -tourCityOptions: List<string>
+  -countryOptions: List<string>
+  -errorMessage: string
+  --
+  #OnInitializedAsync()
+  -AddViewerCategory()
+  -RemoveViewerCategory(PerformanceViewerCategory)
+  -OnTimeChanged(DateTime?)
+  -OnTourTypeChanged(ChangeEventArgs)
+  -LoadOnSiteNameOptions(string)
+  -LoadRegionOptions(string)
+  -OnSiteNameInput(string)
+  -OnSiteNameSelected(string)
+  -OnRegionInput(string)
+  -OnRegionSelected(string)
+  -LoadTourCityOptions(string)
+  -LoadCountryOptions(string)
+  -OnTourCityInput(string)
+  -OnTourCitySelected(string)
+  -OnCountryInput(string)
+  -OnCountrySelected(string)
+  -GetCurrentUserId(): Task<string>
+  -CreateNewPerformance()
+  -HandleFileUpload(InputFileChangeEventArgs)
+  -Cancel()
+}
+
+class EditPerformance {
+  +PlayId: int
+  +PerformanceId: int
+  -performanceDto: PerformanceDto
+  -performance: Performance
+  -viewerCategoriesList: List<ViewerCategory>
+  -performanceViewerCategories: List<PerformanceViewerCategory>
+  -stationaryLocations: List<StationarLocation>
+  -onSiteNameOptions: List<string>
+  -regionOptions: List<string>
+  -tourCityOptions: List<string>
+  -countryOptions: List<string>
+  --
+  #OnInitializedAsync()
+  -AddViewerCategory()
+  -RemoveViewerCategory(PerformanceViewerCategory)
+  -OnTourTypeChanged(ChangeEventArgs)
+  -LoadOnSiteNameOptions(string)
+  -LoadRegionOptions(string)
+  -OnSiteNameInput(string)
+  -OnSiteNameSelected(string)
+  -OnRegionInput(string)
+  -OnRegionSelected(string)
+  -LoadTourCityOptions(string)
+  -LoadCountryOptions(string)
+  -OnTourCityInput(string)
+  -OnTourCitySelected(string)
+  -OnCountryInput(string)
+  -OnCountrySelected(string)
+  -EditThisPerformance(EditContext)
+  -Cancel()
+}
+
+class Performances {
+  +PlayId: int
+  +_performanceTable: ITable
+  -_performanceDataSource: List<Performance>
+  -_performanceTotal: int
+  -_currentPerformanceQuery: QueryModel<Performance>
+  -_isModalVisible: bool
+  -_editPlay: Play
+  --
+  #OnInitializedAsync()
+  -LoadPlayData()
+  -OnPerformanceChange(QueryModel<Performance>)
+  -GetAllPerformanceAsync(): Task<List<Performance>>
+  -LoadPerformanceData(QueryModel<Performance>?)
+  -EditPerformance(int)
+  -AddPerformance()
+  -GoBack()
+  -EditPlay()
+  -OnPlayEdited()
+}
+
+class AddReport {
+  -report: Report
+  -selectedPeriod: string
+  -customStartDate: DateTime
+  -customEndDate: DateTime
+  -_isGenerating: bool
+  -performanceFilter: PerformanceFilterType
+  -tourFilter: TourFilterType
+  -stationaryFilter: string
+  -stationaryLocations: List<string>
+  -onsiteFilter: OnSiteFilterType
+  --
+  #OnInitializedAsync()
+  -CalculateEndDate(int): DateTime
+  -SetPeriod(string)
+  -GetPeriodDescription(): string
+  -GenerateReport()
+  -GetPerformancesData(): Task<PlayReportDataContainer>
+  -GetAuthorsData(): Task<List<AuthorReportData>>
+  -Cancel()
+}
+
+class ViewReport {
+  +ReportId: int
+  -report: Report
+  -totalData: PlayReportTotal
+  -playsData: List<PlayReportData>
+  -freeCategories: List<FreeCategoryData>
+  -authorsData: List<AuthorReportData>
+  --
+  #OnInitializedAsync()
+  -excelSheetName: string
+  -ExportToExcel()
+  -GoBack()
+}
+
+class Reports {
+  -searchValue: string
+  -_dataSource: List<Report>
+  -_total: int
+  -_table: ITable
+  --
+  #OnInitializedAsync()
+  -LoadReports()
+  -OnSearchInput(ChangeEventArgs)
+  -OnChange(QueryModel<Report>)
+  -AddReport()
+  -ViewReport(int)
+}
+
+class Plays {
+  -_playsDataSource: List<Play>
+  -_allPlays: List<Play>
+  -_performanceCounts: Dictionary<int, int>
+  -searchValue: string
+  -_totalCount: int
+  -_pageSize: int
+  -_currentPage: int
+  -_isModalVisible: bool
+  --
+  #OnInitializedAsync()
+  -GetAllPlaysAsync()
+  -GetPerformanceCount(int): int
+  -LoadPlays()
+  -OnSearchInput(ChangeEventArgs)
+  -OnPageChanged(PaginationEventArgs)
+  -AddPlay()
+  -OnPlaySaved()
+}
+
+class PlayModal {
+  +IsEdit: bool
+  +EditPlay: Play
+  +Visible: bool
+  +OnSuccess: EventCallback
+  +VisibleChanged: EventCallback<bool>
+  -Model: Play
+  -FormRef: Form<Play>
+  -error: string
+  -_isSubmitting: bool
+  -allAuthors: List<Authors>
+  --
+  #OnParametersSetAsync()
+  -OnFinish(EditContext)
+  -OnFinishFailed(EditContext)
+  -HandleOk()
+  -AddAuthor()
+  -RemoveAuthor(PlayAuthors)
+  -HandleCancel()
+}
+
+class AddAuthor {
+  -worksToChoose: List<AuthorJob>
+  -authorDto: AuthorsDto
+  --
+  #OnInitializedAsync()
+  -CreateNewAuthor()
+  -Cancel()
+}
+
+class Authors {
+  +_authorTable: ITable
+  -_authorDataSource: List<Authors>
+  -_authorsTotal: int
+  -_currentAuthorsQuery: QueryModel<Authors>
+  -searchValue: string
+  --
+  -OnAuthorsChange(QueryModel<Authors>)
+  -GetAllAuthorsAsync(): Task<List<Authors>>
+  -LoadAuthorsData(QueryModel<Authors>?)
+  -EditAuthor(int)
+  -AddAuthor()
+  -OnSearchInput(ChangeEventArgs)
+}
+
+class EditAuthor {
+  +authorId: int
+  -worksToChoose: List<AuthorJob>
+  -authorDto: AuthorsDto
+  --
+  #OnInitializedAsync()
+  -LoadAuthor()
+  -EditThisAuthor()
+  -Cancel()
+}
+
+class AddUser {
+  -identityErrors: IEnumerable<IdentityError>
+  -newUserModel: RegisterUserDto
+  -rolesToChoose: List<IdentityRole>
+  -errorMessage: string
+  --
+  #OnInitializedAsync()
+  -CreateNewUser()
+  -Cancel()
+}
+
+class EditUser {
+  +Id: string
+  -userDto: UserDto
+  -rolesToChoose: List<IdentityRole>
+  --
+  #OnInitializedAsync()
+  -LoadUser()
+  -EditThisUser()
+  -Cancel()
+}
+
+class Users {
+  +_usersTable: ITable
+  -_usersDataSource: List<UserDto>
+  -_usersTotal: int
+  -_currentUsersQuery: QueryModel<UserDto>
+  --
+  -OnUsersChange(QueryModel<UserDto>)
+  -GetAllUsersWithRolesAsync(): Task<List<UserDto>>
+  -LoadUsersData(QueryModel<UserDto>?)
+  -EditUser(string)
+  -AddUser()
+  -DeleteUser(string, string)
+}
+
+class TheatreDbContext {
+}
+
+' ===== Связи =====
+
+
+AddPerformance -right-> TheatreDbContext
+EditPerformance -left-> TheatreDbContext
+Performances -up-> TheatreDbContext
+AddReport -left-> TheatreDbContext
+ViewReport -up-> TheatreDbContext
+Reports -down-> TheatreDbContext
+Plays -down-> TheatreDbContext
+PlayModal -right-> TheatreDbContext
+AddAuthor -up-> TheatreDbContext
+Authors -down-> TheatreDbContext
+EditAuthor -down-> TheatreDbContext
+AddUser -up-> TheatreDbContext
+Users -up-> TheatreDbContext
+EditUser -down-> TheatreDbContext
+@enduml

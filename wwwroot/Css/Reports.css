@@ -9,17 +9,17 @@
      text-align: center;
 }
 .ant-table-thead > tr > th {
-    background-color: #424242;
-    color:white;
+    background-color: var(--light-gray);
+    color: black;
 }
 .ant-table-tbody > tr.ant-table-row:hover > td {
-    background-color: #F8F7EC;
+    background-color: #708D81;
 }
 .ant-table-tbody {
-    background-color: #D9D5BA;
+    background-color: white;
 }
 .ant-table-container {
-    background-color: #B9BAA3;
+    background-color: #f0f2f5;
 }
 .arrow {
     all: unset;

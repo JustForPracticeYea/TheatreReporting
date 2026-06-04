@@ -3,16 +3,20 @@ html, body {
 }
 
 body {
-    background-color: #B9BAA3;
+    background-color: #f0f2f5;
 }
 
 a, .btn-link {
-    color: black;
+    color: var(--ant-primary-color);
+    text-decoration: none;
+    background-color: transparent;
+    outline: none;
+    cursor: pointer;
+    transition: color 0.3s;
 }
 
 .btn-primary {
     color: #fff;
-    background-color: #1b6ec2;
     border-color: #1861ac;
 }
 
@@ -57,6 +61,7 @@ h1:focus {
 .ant-table-content {
     width: 70%;
     justify-self: center;
+    border: 2px solid var(--light-gray);
 }
 
 .ant-page-header {
@@ -85,8 +90,8 @@ h1:focus {
     padding: 0 5px;
     font-weight: 500;
     font-size: 20px;
-    background: #424242;
-    border-bottom: 1px solid #424242;
+    background: #708D81;
+    border-bottom: 1px solid #708D81;
     border-radius: 2px 2px 0 0;
     color: white;
     align-content: center;
@@ -111,7 +116,7 @@ h1:focus {
 .ant-card-body {
     padding: 4px;
     text-align: center;
-    background-color: #F3F1E2;
+    background-color: var(--light-gray);
 }
 
 .ant-row-start {
@@ -147,77 +152,42 @@ h1:focus {
     margin-left: 4px;
 }
 
+.ant-table-pagination {
+    justify-content: center;
+}
+
 .ant-pagination {
-    box-sizing: border-box;
-    margin: 0px 0px 10px auto;
-    padding: 0;
-    color: rgba(0, 0, 0, 0.85);
-    font-size: 14px;
-    font-variant: tabular-nums;
-    line-height: 1.5715;
-    list-style: none;
-    font-feature-settings: 'tnum';
-    width: 100%;
-    display: flex;
-    justify-content: center; 
+    display:flex;
+    justify-content: center;
 }
 
-.ant-pagination-disabled .ant-pagination-item-link, .ant-pagination-disabled:hover .ant-pagination-item-link {
-    color: rgba(0, 0, 0, 0.25);
-    border-color: #d9d9d9;
-    cursor: not-allowed;
-    background-color: #D9D9D9;
+.ant-pagination-item,
+.ant-pagination-prev .ant-pagination-item-link,
+.ant-pagination-next .ant-pagination-item-link {
+    background-color: var(--gray);
+    border-color: var(--light-gray);
+    border-radius: 5px;
 }
 
-.ant-pagination-prev .ant-pagination-item-link, .ant-pagination-next .ant-pagination-item-link {
-    display: block;
-    width: 100%;
-    height: 100%;
-    padding: 0;
-    font-size: 12px;
-    text-align: center;
-    background-color: #fff;
-    border: 1px solid #d9d9d9;
-    border-radius: 2px;
-    outline: none;
-    transition: all 0.3s;
-    background-color: #D9D9D9;
+.ant-pagination-item-active a {
+    background-color: var(--primary-color);
+    color: var(--dark);
+    border-color: var(--primary-color);
+    border-radius: 5px;
 }
-.ant-pagination-prev:hover .ant-pagination-item-link, .ant-pagination-next:hover .ant-pagination-item-link {
-    color: #424242;
-    border-color: #424242;
-}
-.ant-pagination-item {
-    display: inline-block;
-    min-width: 32px;
-    height: 32px;
-    margin-right: 8px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-    line-height: 30px;
-    text-align: center;
-    vertical-align: middle;
-    list-style: none;
-    background-color: #fff;
-    border: 1px solid #d9d9d9;
-    border-radius: 2px;
-    outline: 0;
-    cursor: pointer;
-    user-select: none;
-    background-color: #d9d9d9;
-}
+
+.ant-pagination-item-active:hover,
 .ant-pagination-item:hover {
-    border-color: #424242;
-    transition: all 0.3s;
+    background-color: var(--light-gray);
+    border-color: var(--light-gray);
 }
-.ant-pagination-item-active {
-    font-weight: 500;
-    background: #424242;
-    border-color: #424242;
-    color: white;
+
+.ant-pagination-prev .ant-pagination-item-link:hover,
+.ant-pagination-next .ant-pagination-item-link:hover {
+    background-color: var(--light-gray);
+    border-color: var(--light-gray);
 }
-.ant-pagination-item-active:hover {
-    border-color: #424242;
-}
+
 .move-forward-arrow{
     all:unset;
     color:white;
@@ -276,13 +246,13 @@ h1:focus {
 
     .auth-user-panel a {
         text-decoration:none;
-        color:black;
+        color:white;
         margin: 0;
         text-align: center;
     }
     .auth-user-panel a:hover {
         text-decoration: none;
-        color: black;
+        color: white;
         margin: 0;
         text-align: center;
     }
@@ -296,7 +266,7 @@ h1:focus {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #D9D5BA;
+    background-color: #f0f2f5;
     border-radius: 15px;
     margin: 20px auto;
     width: fit-content;
@@ -305,15 +275,16 @@ h1:focus {
 
 .form-wrapper {
     width: 95%;
-    padding:10px;
+    padding: 10px;
+    background-color: white;
 }
 
 .bg-card-header {
-    background-color: #463A3A;
+    background-color: #708D81;
 }
 
 .card-body {
-    background-color: #D9D5BA
+    background-color: white;
 }
 
 .location-form-control {
@@ -341,9 +312,9 @@ h1:focus {
     flex-direction: column;
     min-width: 0;
     word-wrap: break-word;
-    background-color: #fff;
+    background-color: #708D81;
     background-clip: border-box;
-    border: 2px solid #463A3A;
+    border: 2px solid #708D81;
     border-radius: 0;
 }
 .fade-in {
@@ -393,8 +364,38 @@ h1:focus {
 .form-container-reports {
     display: flex;
     justify-content: center;
-    background-color: #D9D5BA;
+    background-color: #f0f2f5;
     border-radius: 15px;
     margin: 20px auto;
     max-width: 85%;
+}
+
+:root {
+    --primary-color: #708D81;
+    --secondary-color: #D4B655;
+    --danger-color: #e07272;
+    --danger-light: #f79f9f;
+    --dark-header: #001427;
+    --dark-gray: #615f5f;
+    --gray: #ada1a1;
+    --light-gray: #d4d1d1;
+    --light: #ffffff;
+    --dark: #000000;
+    /*Переопределение*/
+    --ant-primary-color: #708D81;
+    --ant-primary-1: #def2dc;
+    --ant-primary-5: #309127;
+    --ant-primary-color-active: #D4B655;
+    --ant-primary-color-hover: #708D81;
+    --ant-primary-color-outline: #def2dc;
+    --ant-success-color: #52c41a;
+    --ant-warning-color: #faad14;
+    --ant-error-color: #bd4a4a;
+    --ant-font-size-base: 14px;
+    --ant-heading-color: rgba(0, 0, 0, 0.85);
+    --ant-text-color: rgba(0, 0, 0, 0.65);
+    --ant-text-color-secondary: rgba(0, 0, 0, 0.45);
+    --ant-disabled-color: rgba(0, 0, 0, 0.25);
+    --ant-border-radius-base: 2px;
+    --ant-border-color-base: #d9d9d9;
 }

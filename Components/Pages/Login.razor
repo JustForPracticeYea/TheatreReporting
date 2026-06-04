@@ -6,37 +6,39 @@
 @inject SignInManager<Models.Users> SignInManager
 @inject NavigationManager NavigationManager
 
-<h1 class="login-h1">Авторизция</h1>
-<div class="login-row">
-    <div class="col-md-4">
-        <section>
-            <div class="text-danger" style="font-size:large">
-                @errorMessage
-            </div>
-            <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
-                <DataAnnotationsValidator />
-                <hr />
-                <ValidationSummary class="text-danger" role="alert" />
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                    <label for="email" class="form-label">Почта</label>
+<div class="login-box">
+    <h1 class="login-h1">Авторизция</h1>
+    <div class="login-row">
+        <div class="col-md-4">
+            <section>
+                <div class="text-danger" style="font-size:large">
+                    @errorMessage
                 </div>
-                <div class="form-floating mb-3">
-                    <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
-                    <label for="password" class="form-label">Пароль</label>
-                </div>
-                <div class="checkbox mb-3">
-                    <label class="form-label" style="cursor:pointer">
-                        <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input" />
-                        Запомнить меня
-                    </label>
-                </div>
-                <div class="btn-login-center">
-                    <button type="submit" class="w-50 btn btn-lg btn-primary">Войти</button>
-                </div>
-            </EditForm>
+                <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
+                    <DataAnnotationsValidator />
+                    <hr />
+                    <ValidationSummary class="text-danger" role="alert" />
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                        <label for="email" class="form-label">Почта</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
+                        <label for="password" class="form-label">Пароль</label>
+                    </div>
+                    <div class="checkbox mb-3">
+                        <label class="form-label" style="cursor:pointer">
+                            <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input" />
+                            Запомнить меня
+                        </label>
+                    </div>
+                    <div class="btn-login-center">
+                        <button type="submit" class="w-50 ant-btn btn-sm ant-btn-primary">Войти</button>
+                    </div>
+                </EditForm>
 
-        </section>
+            </section>
+        </div>
     </div>
 </div>
 
