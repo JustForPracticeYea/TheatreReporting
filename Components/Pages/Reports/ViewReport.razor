@@ -34,7 +34,7 @@ else
     @if (report.Type == ReportType.Performances)
     {
         <div class="mb-3">
-            <Button OnClick="@ExportToExcel">
+            <Button OnClick="@PerformanceExportToExcel">
                 <Icon Type="file-excel" /> Выгрузить в Excel
             </Button>
             <Button OnClick="@GoBack" Class="ms-2">Назад</Button>
@@ -103,22 +103,49 @@ else
     else if (report.Type == ReportType.Authors)
     {
         <div class="mb-3">
-            <Button Type="@ButtonType.Primary" OnClick="@ExportToExcel">
+            <Button OnClick="@AuthorExportToExcel" Type="@ButtonType.Primary">
                 <Icon Type="file-excel" /> Выгрузить в Excel
             </Button>
             <Button OnClick="@GoBack" Class="ms-2">Назад</Button>
         </div>
 
-        <Table TItem="AuthorReportData" DataSource="@authorsData" PageSize="20">
-            <PropertyColumn Property="c => c.Author" Title="Автор" />
-            <PropertyColumn Property="c => c.TotalRoyalty" Title="Сумма отчислений (₽)" />
-        </Table>
+        <div class="card mb-3">
+            <div class="card-header bg-card-header"><h5 class="mb-0 text-white">Отчёт по авторам</h5></div>
+            <div class="card-body p-0 report-table">
+                <Table TItem="AuthorReportData" DataSource="@authorsData" PageSize="50">
+                    <PropertyColumn Property="c => c.DatesFormatted" Title="Кол-во / Даты">
+                        <Template><pre style="margin:0; white-space:pre-line">@context.DatesFormatted</pre></Template>
+                    </PropertyColumn>
+                    <PropertyColumn Property="c => c.PlayTitle" Title="Название">
+                        <Template><pre style="margin:0; white-space:pre-line">@context.PlayTitle</pre></Template>
+                    </PropertyColumn>
+                    <PropertyColumn Property="c => c.ContractNumbers" Title="№ договора">
+                        <Template><pre style="margin:0; white-space:pre-line">@context.ContractNumbers</pre></Template>
+                    </PropertyColumn>
+                    <PropertyColumn Property="c => c.RoyaltyPercentages" Title="%">
+                        <Template><pre style="margin:0; white-space:pre-line">@context.RoyaltyPercentages</pre></Template>
+                    </PropertyColumn>
+                    <PropertyColumn Property="c => c.GrossRevenue" Title="Валовый сбор" />
+                    <PropertyColumn Property="c => c.AuthorFees" Title="Сумма вознаграждения">
+                        <Template><pre style="margin:0; white-space:pre-line">@context.AuthorFees</pre></Template>
+                    </PropertyColumn>
+                    <PropertyColumn Property="c => c.AuthorJobs" Title="Работа">
+                        <Template><pre style="margin:0; white-space:pre-line">@context.AuthorJobs</pre></Template>
+                    </PropertyColumn>
+                    <PropertyColumn Property="c => c.AuthorNames" Title="ФИО">
+                        <Template><pre style="margin:0; white-space:pre-line">@context.AuthorNames</pre></Template>
+                    </PropertyColumn>
+                </Table>
+            </div>
+        </div>
 
-        <div class="card mt-4">
-            <div class="card-header"><h5>Итого</h5></div>
+        <div class="card mb-3">
+            <div class="card-header bg-card-header"><h5 class="mb-0 text-white">Итого</h5></div>
             <div class="card-body">
-                <strong>Всего авторов:</strong> @authorsData.Count<br />
-                <strong>Общая сумма отчислений:</strong> @authorsData.Sum(a => a.TotalRoyalty).ToString("N0") ₽
+                <div class="row">
+                    <div class="col-md-6"><strong>Валовый сбор:</strong> @authorTotalGross.ToString("N0") ₽</div>
+                    <div class="col-md-6"><strong>Авторское вознаграждение:</strong> @authorTotalFee.ToString("N0") ₽</div>
+                </div>
             </div>
         </div>
     }
@@ -131,7 +158,10 @@ else
     private PlayReportTotal? totalData;
     private List<PlayReportData> playsData = new();
     private List<FreeCategoryData> freeCategories = new();
+
     private List<AuthorReportData> authorsData = new();
+    private decimal authorTotalGross;
+    private decimal authorTotalFee;
 
     protected override async Task OnInitializedAsync()
     {
@@ -153,8 +183,11 @@ else
         }
         else if (report.Type == ReportType.Authors)
         {
-            authorsData = System.Text.Json.JsonSerializer.Deserialize<List<AuthorReportData>>(data.GetRawText(),
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+            var container = System.Text.Json.JsonSerializer.Deserialize<AuthorReportContainer>(data.GetRawText(),
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            authorsData = container!.Rows;
+            authorTotalGross = container.TotalGrossRevenue;
+            authorTotalFee = container.TotalAuthorFee;
         }
     }
 
@@ -189,7 +222,7 @@ else
         }
     }
 
-    private async Task ExportToExcel()
+    private async Task PerformanceExportToExcel()
     {
         if (totalData == null || !playsData.Any()) 
             return;
@@ -274,6 +307,394 @@ else
         var base64 = Convert.ToBase64String(stream.ToArray());
         Navigation.NavigateTo($"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{base64}", true);
     }   
+
+
+    private async Task AuthorExportToExcel()
+    {
+        if (report?.Content == null || !authorsData.Any()) return;
+
+        using var workbook = new XLWorkbook();
+        var ws = workbook.Worksheets.Add("Отчёт по авторам");
+
+        ws.Column(1).Width = 0;
+        for (int i = 2; i <= 35; i++)
+            ws.Column(i).Width = 4.0;
+        ws.Column(25).Width = 5.86;
+
+        int row = 1;
+
+        ws.Range(1, 2, 6, 20).Merge().Value =
+            "Реквизиты для заполнения платежного поручения:             (РАО) ИНН 7703030403       КПП 770301001\n" +
+            "расчетный счет №:    40703810200008110611\n" +
+            "Банк получателя:\n" +
+            "КБ \"Новый век\" (ООО)\n" +
+            "кор.сч. 30101810845250000517,  БИК 044525517";
+        ws.Range(1, 2, 6, 20).Style.Alignment.SetWrapText(true);
+        ws.Range(1, 2, 6, 20).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Top);
+        ws.Range(1, 2, 6, 20).Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
+
+        ws.Range(1, 26, 1, 30).Merge().Value = "Расчётный лист №";
+        ws.Range(1, 26, 1, 30).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+
+        ws.Cell(2, 21).Value = "К отчёту за:";
+        ws.Range(2, 26, 2, 33).Merge().Value = $"{report.FromPeriod:MMMM yyyy}";
+        ws.Range(2, 26, 2, 33).Style.Border.SetBottomBorder(XLBorderStyleValues.Thin);
+
+        ws.Range(5, 21, 5, 24).Merge().Value = "За период с";
+        ws.Range(5, 25, 5, 28).Merge().Value = report.FromPeriod.ToString("dd.MM.yyyy");
+        ws.Cell(5, 29).Value = "по";
+        ws.Range(5, 30, 5, 35).Merge().Value = report.ToPeriod.ToString("dd.MM.yyyy");
+
+        ws.Cell(6, 21).Value = "Составлен: ";
+        ws.Range(6, 24, 6, 35).Merge().Value = report.CreatedDate.ToString("dd.MM.yyyy");
+        ws.Range(6, 24, 6, 35).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+
+        row = 8;
+
+        ws.Range(row, 2, row, 7).Merge().Value = "Пользователь: ";
+        ws.Range(row, 2, row, 7).Style.Border.SetBottomBorder(XLBorderStyleValues.Thin);
+        ws.Range(row, 8, row, 30).Merge().Value = "ГАУК ВО \"Владимирский областной театр кукол\"";
+        row += 2;
+
+        ws.Range(row, 2, row, 3).Merge().Value = "ИНН";
+        ws.Range(row, 4, row, 13).Merge().Value = "3329001148";
+        ws.Range(row, 4, row, 13).Style.Border.SetBottomBorder(XLBorderStyleValues.Thin);
+        ws.Range(row, 14, row, 15).Merge().Value = "КПП";
+        ws.Range(row, 16, row, 17).Merge().Value = "332901001";
+        ws.Range(row, 16, row, 17).Style.Border.SetBottomBorder(XLBorderStyleValues.Thin);
+        ws.Cell(row, 24).Value = "Р/СЧ";
+        ws.Range(row, 26, row, 35).Merge().Value = "03224643170000002800";
+        ws.Range(row, 26, row, 35).Style.Border.SetBottomBorder(XLBorderStyleValues.Thin);
+        row += 2;
+
+        WriteTableHeader(ws, ref row);
+
+        int itemsOnFirstPage = 3;
+        int itemsOnOtherPages = 5;
+
+        WritePageData(ws, ref row, authorsData, 0, itemsOnFirstPage, true);
+
+        int startIndex = itemsOnFirstPage;
+        while (startIndex < authorsData.Count)
+        {
+            WritePageData(ws, ref row, authorsData, startIndex, itemsOnOtherPages, false);
+            startIndex += itemsOnOtherPages;
+        }
+
+        ws.Range(row, 2, row, 6).Merge().Value = "ИТОГО валовый сбор:";
+        ws.Range(row, 2, row, 6).Style.Font.SetBold().Font.FontSize = 12;
+        ws.Range(row, 7, row, 16).Merge().Value = authorTotalGross;
+        ws.Range(row, 7, row, 16).Style.NumberFormat.SetFormat("# ##0").Font.SetBold();
+
+        ws.Range(row, 17, row, 26).Merge().Value = "ИТОГО авторское вознаграждение:";
+        ws.Range(row, 17, row, 26).Style.Font.SetBold().Font.FontSize = 12;
+        ws.Range(row, 27, row, 35).Merge().Value = authorTotalFee;
+        ws.Range(row, 27, row, 35).Style.NumberFormat.SetFormat("# ##0").Font.SetBold();
+
+        var tableRange = ws.Range(14, 2, row, 35);
+        tableRange.Style.Border.SetInsideBorder(XLBorderStyleValues.Thin);
+        tableRange.Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
+
+        ws.PageSetup.PageOrientation = XLPageOrientation.Landscape;
+        ws.PageSetup.PaperSize = XLPaperSize.A4Paper;
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var base64 = Convert.ToBase64String(stream.ToArray());
+        Navigation.NavigateTo($"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{base64}", true);
+    }
+
+    private void WriteTableHeader(IXLWorksheet ws, ref int row)
+    {
+        ws.Range(row, 2, row + 1, 5).Merge().Value = "Количество исполнений, даты";
+        ws.Range(row, 6, row + 1, 11).Merge().Value = "Название спектакля";
+        ws.Range(row, 12, row + 1, 14).Merge().Value = "№ договора";
+        ws.Range(row, 15, row + 1, 16).Merge().Value = "Ставка автор. вознагр.";
+        ws.Range(row, 17, row + 1, 21).Merge().Value = "Сумма валового сбора";
+        ws.Range(row, 22, row + 1, 24).Merge().Value = "Сумма авторского вознаграждения";
+        ws.Range(row, 25, row + 1, 26).Merge().Value = "Творческая роль";
+        ws.Range(row, 27, row + 1, 35).Merge().Value = "ФИО автора";
+
+        for (int i = 2; i <= 35; i++)
+        {
+            ws.Cell(row, i).Style.Font.SetBold();
+            ws.Cell(row, i).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+            ws.Cell(row, i).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+            ws.Cell(row, i).Style.Alignment.SetWrapText(true);
+            ws.Cell(row + 1, i).Style.Font.SetBold();
+            ws.Cell(row + 1, i).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+            ws.Cell(row + 1, i).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+            ws.Cell(row + 1, i).Style.Alignment.SetWrapText(true);
+        }
+        row += 2;
+
+        WriteColumnNumbers(ws, row);
+        row++;
+    }
+
+    private void WriteColumnNumbers(IXLWorksheet ws, int row)
+    {
+        int[] colSpans = { 4, 6, 3, 2, 5, 3, 2, 10 };
+        int col = 2;
+        for (int i = 0; i < colSpans.Length; i++)
+        {
+            int endCol = col + colSpans[i] - 1;
+            if (endCol > 35) endCol = 35;
+            ws.Range(row, col, row, endCol).Merge().Value = (i + 1).ToString();
+            ws.Range(row, col, row, endCol).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+            col += colSpans[i];
+        }
+    }
+
+    private void WritePageData(IXLWorksheet ws, ref int row, List<AuthorReportData> allRows,
+        int startIndex, int count, bool isFirstPage)
+    {
+        int endIndex = Math.Min(startIndex + count, allRows.Count);
+        var pageRows = allRows.Skip(startIndex).Take(count).ToList();
+
+        if (!isFirstPage)
+        {
+            WriteColumnNumbers(ws, row);
+            row++;
+        }
+
+        foreach (var data in pageRows)
+            WritePerformanceRow(ws, ref row, data);
+
+        while (pageRows.Count < count)
+        {
+            WriteEmptyPerformanceRow(ws, ref row);
+            pageRows.Add(new AuthorReportData());
+        }
+
+        decimal pageGross = pageRows.Sum(r => r.GrossRevenue);
+        decimal pageFee = pageRows.Sum(r => r.AuthorFee);
+
+        ws.Range(row, 2, row, 6).Merge().Value = "Итого валовый сбор по странице:";
+        ws.Range(row, 2, row, 6).Style.Font.SetBold();
+        ws.Range(row, 7, row, 16).Merge().Value = pageGross;
+        ws.Range(row, 7, row, 16).Style.NumberFormat.SetFormat("# ##0");
+
+        ws.Range(row, 17, row, 26).Merge().Value = "Итого авторское вознаграждение по странице:";
+        ws.Range(row, 17, row, 26).Style.Font.SetBold();
+        ws.Range(row, 27, row, 35).Merge().Value = pageFee;
+        ws.Range(row, 27, row, 35).Style.NumberFormat.SetFormat("# ##0");
+
+        row++;
+    }
+
+    private void WriteEmptyPerformanceRow(IXLWorksheet ws, ref int row)
+    {
+        int startRow = row;
+
+        row++;
+
+        ws.Range(startRow, 2, startRow, 5).Merge();
+        ws.Range(startRow, 6, startRow, 11).Merge();
+        ws.Range(startRow, 12, startRow, 14).Merge();
+        ws.Range(startRow, 15, startRow, 16).Merge();
+        ws.Range(startRow, 17, startRow, 21).Merge();
+        ws.Range(startRow, 22, startRow, 24).Merge();
+        ws.Range(startRow, 25, startRow, 26).Merge();
+        ws.Range(startRow, 27, startRow, 35).Merge();
+
+        ws.Range(startRow + 1, 2, startRow + 1, 5).Merge();
+        ws.Range(startRow + 1, 6, startRow + 1, 11).Merge();
+
+
+        for (int i = 2; i <= 6; i++)
+            ws.Range(startRow + i, 2, startRow + i, 5).Merge();
+
+        ws.Range(startRow + 2, 6, startRow + 6, 11).Merge();
+
+        ws.Range(startRow, 17, startRow + 6, 21).Merge();
+
+        ws.Range(startRow, 12, startRow, 14).Merge();
+        ws.Range(startRow + 1, 12, startRow + 1, 14).Merge();
+        ws.Range(startRow + 2, 12, startRow + 2, 14).Merge();
+        ws.Range(startRow + 3, 12, startRow + 3, 14).Merge();
+        ws.Range(startRow + 4, 12, startRow + 4, 14).Merge();
+        ws.Range(startRow + 5, 12, startRow + 5, 14).Merge();
+        ws.Range(startRow + 6, 12, startRow + 6, 14).Merge();
+
+        ws.Range(startRow, 15, startRow, 16).Merge();
+        ws.Range(startRow + 1, 15, startRow + 1, 16).Merge();
+        ws.Range(startRow + 2, 15, startRow + 2, 16).Merge();
+        ws.Range(startRow + 3, 15, startRow + 3, 16).Merge();
+        ws.Range(startRow + 4, 15, startRow + 4, 16).Merge();
+        ws.Range(startRow + 5, 15, startRow + 5, 16).Merge();
+        ws.Range(startRow + 6, 15, startRow + 6, 16).Merge();
+
+        ws.Range(startRow, 22, startRow, 24).Merge();
+        ws.Range(startRow + 1, 22, startRow + 1, 24).Merge();
+        ws.Range(startRow + 2, 22, startRow + 2, 24).Merge();
+        ws.Range(startRow + 3, 22, startRow + 3, 24).Merge();
+        ws.Range(startRow + 4, 22, startRow + 4, 24).Merge();
+        ws.Range(startRow + 5, 22, startRow + 5, 24).Merge();
+        ws.Range(startRow + 6, 22, startRow + 6, 24).Merge();
+
+        ws.Range(startRow, 25, startRow, 26).Merge();
+        ws.Range(startRow + 1, 25, startRow + 1, 26).Merge().Value = "автор";
+        ws.Range(startRow + 2, 25, startRow + 2, 26).Merge();
+        ws.Range(startRow + 3, 25, startRow + 3, 26).Merge().Value = "художник";
+        ws.Range(startRow + 4, 25, startRow + 4, 26).Merge();
+        ws.Range(startRow + 5, 25, startRow + 5, 26).Merge().Value = "композитор";
+        ws.Range(startRow + 6, 25, startRow + 6, 26).Merge();
+
+        ws.Range(startRow, 27, startRow, 35).Merge();
+        ws.Range(startRow + 1, 27, startRow + 1, 35).Merge();
+        ws.Range(startRow + 2, 27, startRow + 2, 35).Merge();
+        ws.Range(startRow + 3, 27, startRow + 3, 35).Merge();
+        ws.Range(startRow + 4, 27, startRow + 4, 35).Merge();
+        ws.Range(startRow + 5, 27, startRow + 5, 35).Merge();
+        ws.Range(startRow + 6, 27, startRow + 6, 35).Merge();
+
+        ws.Range(startRow + 7, 2, startRow + 7, 5).Merge();
+        ws.Range(startRow + 7, 6, startRow + 7, 14).Merge().Value = "Всего по спектаклю:";
+        ws.Range(startRow + 7, 6, startRow + 7, 14).Style.Font.SetBold().Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+        ws.Range(startRow + 7, 15, startRow + 7, 16).Merge().Value = "0,00";
+        ws.Range(startRow + 7, 15, startRow + 7, 16).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+        ws.Range(startRow + 7, 17, startRow + 7, 21).Merge().Value = "Итог а/в:";
+        ws.Range(startRow + 7, 17, startRow + 7, 21).Style.Font.SetBold().Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+        ws.Range(startRow + 7, 22, startRow + 7, 35).Merge().Value = 0;
+        ws.Range(startRow + 7, 22, startRow + 7, 35).Style.NumberFormat.SetFormat("# ##0").Font.SetBold().Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+
+        row = startRow + 8;
+    }
+
+    private void WritePerformanceRow(IXLWorksheet ws, ref int row, AuthorReportData data)
+    {
+        int startRow = row;
+
+        ws.Range(startRow, 2, startRow, 5).Merge();
+        ws.Range(startRow, 6, startRow, 11).Merge();
+        ws.Range(startRow, 12, startRow, 14).Merge();
+        ws.Range(startRow, 15, startRow, 16).Merge();
+        ws.Range(startRow, 17, startRow, 21).Merge();
+        ws.Range(startRow, 22, startRow, 24).Merge();
+        ws.Range(startRow, 25, startRow, 26).Merge();
+        ws.Range(startRow, 27, startRow, 35).Merge();
+        row++;
+
+        ws.Range(row, 2, row, 5).Merge().Value = data.PerformanceCount;
+        ws.Range(row, 2, row, 5).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+        row++;
+
+        var dates = data.DatesFormatted.Split('\n').Skip(1).ToList();
+        for (int i = 0; i < 5; i++)
+        {
+            if (i < dates.Count)
+            {
+                ws.Range(row + i, 2, row + i, 5).Merge().Value = dates[i];
+                ws.Range(row + i, 2, row + i, 5).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+            }
+            else
+                ws.Range(row + i, 2, row + i, 5).Merge();
+        }
+        row += 5;
+
+        ws.Range(startRow, 6, startRow + 1, 11).Merge();
+        ws.Range(startRow + 2, 6, startRow + 6, 11).Merge().Value = data.PlayTitle;
+        ws.Range(startRow + 2, 6, startRow + 6, 11).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+        ws.Range(startRow + 2, 6, startRow + 6, 11).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+
+        ws.Range(startRow, 17, startRow + 6, 21).Merge().Value = data.GrossRevenue;
+        ws.Range(startRow, 17, startRow + 6, 21).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+        ws.Range(startRow, 17, startRow + 6, 21).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+        ws.Range(startRow, 17, startRow + 6, 21).Style.NumberFormat.SetFormat("# ##0");
+
+        var namesList = data.AuthorNames.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        var jobs = data.AuthorJobs.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        var contracts = data.ContractNumbers.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        var percentages = data.RoyaltyPercentages.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        var fees = data.AuthorFees.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+        var authorDataList = new List<(string name, string job, string contract, string perc, string fee)>();
+        for (int i = 0; i < namesList.Length; i++)
+        {
+            authorDataList.Add((
+                namesList[i],
+                i < jobs.Length ? jobs[i] : "",
+                i < contracts.Length ? contracts[i] : "",
+                i < percentages.Length ? percentages[i] : "",
+                i < fees.Length ? fees[i] : ""
+            ));
+        }
+
+        var avtor = authorDataList.FirstOrDefault(a => a.job.Contains("автор", StringComparison.OrdinalIgnoreCase));
+        var artist = authorDataList.FirstOrDefault(a => a.job.Contains("художник", StringComparison.OrdinalIgnoreCase));
+        var composer = authorDataList.FirstOrDefault(a => a.job.Contains("композитор", StringComparison.OrdinalIgnoreCase));
+
+        var roles = new[] { ("автор", avtor, 1), ("художник", artist, 3), ("композитор", composer, 5) };
+        double totalPerc = 0;
+
+        foreach (var (roleName, author, roleRow) in roles)
+        {
+            int r = startRow + roleRow;
+
+            if (author.name != "")
+            {
+                ws.Range(r, 12, r, 14).Merge().Value = author.contract;
+                ws.Range(r, 12, r, 14).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+
+                ws.Range(r, 15, r, 16).Merge().Value = author.perc;
+                ws.Range(r, 15, r, 16).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                totalPerc += double.TryParse((author.perc ?? "").Replace("%", ""), out double p) ? p : 0;
+
+                ws.Range(r, 22, r, 24).Merge().Value = author.fee;
+                ws.Range(r, 22, r, 24).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+
+                ws.Range(r, 25, r, 26).Merge().Value = roleName;
+                ws.Range(r, 25, r, 26).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+
+                ws.Range(r, 27, r, 35).Merge().Value = author.name;
+                ws.Range(r, 27, r, 35).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+            }
+            else
+            {
+                ws.Range(r, 12, r, 14).Merge();
+                ws.Range(r, 15, r, 16).Merge();
+                ws.Range(r, 22, r, 24).Merge();
+                ws.Range(r, 25, r, 26).Merge().Value = roleName;
+                ws.Range(r, 25, r, 26).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                ws.Range(r, 27, r, 35).Merge();
+            }
+            ws.Range(startRow + 6, 12, startRow + 6, 14).Merge();
+            ws.Range(startRow + 6, 15, startRow + 6, 16).Merge();
+            ws.Range(startRow + 6, 22, startRow + 6, 24).Merge();
+            ws.Range(startRow + 6, 25, startRow + 6, 26).Merge();
+            ws.Range(startRow + 6, 27, startRow + 6, 35).Merge();
+
+            if (roleRow < 5)
+            {
+                int emptyRow = startRow + roleRow + 1;
+                ws.Range(emptyRow, 12, emptyRow, 14).Merge();
+                ws.Range(emptyRow, 15, emptyRow, 16).Merge();
+                ws.Range(emptyRow, 22, emptyRow, 24).Merge();
+                ws.Range(emptyRow, 25, emptyRow, 26).Merge();
+                ws.Range(emptyRow, 27, emptyRow, 35).Merge();
+            }
+        }
+
+        ws.Range(startRow + 7, 2, startRow + 7, 5).Merge();
+        ws.Range(startRow + 7, 6, startRow + 7, 14).Merge().Value = "Всего по спектаклю:";
+        ws.Range(startRow + 7, 6, startRow + 7, 14).Style.Font.SetBold();
+        ws.Range(startRow + 7, 6, startRow + 7, 14).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+
+        ws.Range(startRow + 7, 15, startRow + 7, 16).Merge().Value = totalPerc > 0 ? $"{totalPerc}%" : "0,00";
+        ws.Range(startRow + 7, 15, startRow + 7, 16).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+
+        ws.Range(startRow + 7, 17, startRow + 7, 21).Merge().Value = "Итог а/в:";
+        ws.Range(startRow + 7, 17, startRow + 7, 21).Style.Font.SetBold();
+        ws.Range(startRow + 7, 17, startRow + 7, 21).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+
+        ws.Range(startRow + 7, 22, startRow + 7, 35).Merge().Value = data.AuthorFee;
+        ws.Range(startRow + 7, 22, startRow + 7, 35).Style.NumberFormat.SetFormat("# ##0");
+        ws.Range(startRow + 7, 22, startRow + 7, 35).Style.Font.SetBold();
+        ws.Range(startRow + 7, 22, startRow + 7, 35).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+
+        row++;
+    }
 
     private void GoBack() => Navigation.NavigateTo("/reports");
 }

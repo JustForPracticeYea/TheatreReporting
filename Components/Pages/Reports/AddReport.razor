@@ -74,42 +74,59 @@
                     </InputSelect>
                 </div>
             }
-        }
+        
 
-        <div class="form-group mb-3">
-            <label>Дата, с которой формируется отчёт</label>
-            <AntDesign.DatePicker class="form-control w-50"
-                                  CultureInfo="@System.Globalization.CultureInfo.GetCultureInfo("ru-Ru")"
-                                  @bind-Value="@report.FromPeriod" />
-        </div>
-
-        <div class="form-group mb-3">
-            <label>Период</label>
-            <div class="d-flex flex-wrap gap-2 mb-2">
-                <Button Type="@(selectedPeriod == "12M" ? ButtonType.Primary : ButtonType.Default)" OnClick="@(() => SetPeriod("12M"))">1 год</Button>
-                <Button Type="@(selectedPeriod == "9M" ? ButtonType.Primary : ButtonType.Default)" OnClick="@(() => SetPeriod("9M"))">9 мес</Button>
-                <Button Type="@(selectedPeriod == "6M" ? ButtonType.Primary : ButtonType.Default)" OnClick="@(() => SetPeriod("6M"))">6 мес</Button>
-                <Button Type="@(selectedPeriod == "3M" ? ButtonType.Primary : ButtonType.Default)" OnClick="@(() => SetPeriod("3M"))">3 мес</Button>
-                <Button Type="@(selectedPeriod == "1M" ? ButtonType.Primary : ButtonType.Default)" OnClick="@(() => SetPeriod("1M"))">1 мес</Button>
-                <Button Type="@(selectedPeriod == "Custom" ? ButtonType.Primary : ButtonType.Default)" OnClick="@(() => SetPeriod("Custom"))">Другое</Button>
+            @if (selectedPeriod != "Custom")
+            {
+                <div class="form-group mb-3">
+                    <label>Дата, с которой формируется отчёт</label>
+                    <AntDesign.DatePicker class="form-control w-50"
+                                          CultureInfo="@System.Globalization.CultureInfo.GetCultureInfo("ru-Ru")"
+                                          @bind-Value="@report.FromPeriod" />
+                </div>
+            }
+            <div class="form-group mb-3">
+                <label>Период</label>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    <Button Type="@(selectedPeriod == "12M" ? ButtonType.Primary : ButtonType.Default)" OnClick="@(() => SetPeriod("12M"))">1 год</Button>
+                    <Button Type="@(selectedPeriod == "9M" ? ButtonType.Primary : ButtonType.Default)" OnClick="@(() => SetPeriod("9M"))">9 мес</Button>
+                    <Button Type="@(selectedPeriod == "6M" ? ButtonType.Primary : ButtonType.Default)" OnClick="@(() => SetPeriod("6M"))">6 мес</Button>
+                    <Button Type="@(selectedPeriod == "3M" ? ButtonType.Primary : ButtonType.Default)" OnClick="@(() => SetPeriod("3M"))">3 мес</Button>
+                    <Button Type="@(selectedPeriod == "1M" ? ButtonType.Primary : ButtonType.Default)" OnClick="@(() => SetPeriod("1M"))">1 мес</Button>
+                    <Button Type="@(selectedPeriod == "Custom" ? ButtonType.Primary : ButtonType.Default)" OnClick="@(() => SetPeriod("Custom"))">Другое</Button>
+                </div>
             </div>
-        </div>
 
-        @if (selectedPeriod == "Custom")
+            @if (selectedPeriod == "Custom")
+            {
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label>С даты</label>
+                            <AntDesign.DatePicker class="form-control" 
+                                                  CultureInfo="@System.Globalization.CultureInfo.GetCultureInfo("ru-Ru")" 
+                                                  @bind-Value="@customStartDate" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label>По дату</label>
+                            <AntDesign.DatePicker class="form-control" 
+                                                  CultureInfo="@System.Globalization.CultureInfo.GetCultureInfo("ru-Ru")" 
+                                                  @bind-Value="@customEndDate" />
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        @if (report.Type == ReportType.Authors)
         {
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group mb-3">
-                        <label>С даты</label>
-                        <AntDesign.DatePicker class="form-control" CultureInfo="@System.Globalization.CultureInfo.GetCultureInfo("ru-Ru")" @bind-Value="@customStartDate" />
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group mb-3">
-                        <label>По дату</label>
-                        <AntDesign.DatePicker class="form-control" CultureInfo="@System.Globalization.CultureInfo.GetCultureInfo("ru-Ru")" @bind-Value="@customEndDate" />
-                    </div>
-                </div>
+            <div class="form-group mb-3">
+                <label>Месяц, за который формируется отчёт</label>
+                <AntDesign.DatePicker class="form-control w-50"
+                                      Picker="DatePickerType.Month"
+                                      CultureInfo="@System.Globalization.CultureInfo.GetCultureInfo("ru-Ru")"
+                                      @bind-Value="@authorReportMonth" />
             </div>
         }
 
@@ -137,6 +154,11 @@
     private DateTime customStartDate = DateTime.Now;
     private DateTime customEndDate = DateTime.Now.AddMonths(1);
     private bool _isGenerating;
+
+    private DateTime authorReportMonth = DateTime.Now;
+    private DateTime authorStartDate => new DateTime(authorReportMonth.Year, authorReportMonth.Month, 1);
+    private DateTime authorEndDate => authorStartDate.AddMonths(1).AddDays(-1);
+    private DateTime authorQueryEndDate => authorStartDate.AddMonths(1);
 
     private PerformanceFilterType performanceFilter = PerformanceFilterType.All;
     private TourFilterType tourFilter = TourFilterType.All;
@@ -171,7 +193,10 @@
         selectedPeriod = period; 
     }
 
-    private string GetPeriodDescription() => selectedPeriod switch
+    private string GetPeriodDescription() => report.Type == ReportType.Authors ?
+    $"За {authorReportMonth:MMMM yyyy} ({authorStartDate:dd.MM.yyyy} — {authorEndDate:dd.MM.yyyy})" :
+    
+    selectedPeriod switch
     {
         "1M" => $"1 месяц ({startDate:dd.MM.yyyy} — {endDate:dd.MM.yyyy})",
         "3M" => $"3 месяца ({startDate:dd.MM.yyyy} — {endDate:dd.MM.yyyy})",
@@ -184,7 +209,15 @@
     private async Task GenerateReport()
     {
         _isGenerating = true;
-        report.ToPeriod = endDate;
+        if (report.Type == ReportType.Authors)
+        {
+            report.FromPeriod = authorStartDate;
+            report.ToPeriod = authorEndDate;
+        }
+        else
+        {
+            report.ToPeriod = endDate;
+        }
 
         var metadata = new
         {
@@ -276,16 +309,88 @@
         };
     }
 
-    private async Task<List<AuthorReportData>> GetAuthorsData()
+    private async Task<AuthorReportContainer> GetAuthorsData()
     {
-        var performances = await _context.Performances.Where(p => p.EventDateTime >= startDate && p.EventDateTime < endDate)
-            .Include(p => p.Play).ThenInclude(p => p.PlayAuthors).ThenInclude(pa => pa.Authors).ToListAsync();
+        var performances = await _context.Performances
+            .Where(p => p.EventDateTime >= authorStartDate && p.EventDateTime < authorQueryEndDate)
+            .Include(p => p.Play)
+                .ThenInclude(p => p.PlayAuthors)
+                    .ThenInclude(pa => pa.Authors)
+                        .ThenInclude(a => a.AuthorJob)
+            .OrderBy(p => p.EventDateTime)
+            .ToListAsync();
 
-        return performances.SelectMany(p => p.Play.PlayAuthors).GroupBy(pa => pa.Authors).Select(g => new AuthorReportData
+        var grouped = performances
+            .GroupBy(p => p.Play.Title)
+            .Select(g =>
+            {
+                var playPerformances = g.OrderBy(p => p.EventDateTime).ToList();
+
+                var dates = playPerformances.Select(p => p.EventDateTime.ToString("dd.MM")).ToList();
+                var datesFormatted = FormatDatesWithCount(playPerformances.Count, dates);
+
+                var authors = playPerformances
+                    .SelectMany(p => p.Play.PlayAuthors)
+                    .DistinctBy(pa => pa.AuthorsId)
+                    .ToList();
+
+                var contractNumbers = string.Join("\n", authors.Select(a => a.ContractNumber));
+
+                var percentages = string.Join("\n", authors.Select(a => $"{a.RoyaltyPercentage}%"));
+                var fees = string.Join("\n", authors.Select(a =>
+                {
+                    var fee = playPerformances.Sum(p => p.TotalRealAmountTickSoldInOfficeOnline) * a.RoyaltyPercentage / 100;
+                    return $"{fee:N0} ₽";
+                }));
+                var jobs = string.Join("\n", authors.Select(a => a.Authors.AuthorJob?.Title ?? ""));
+                var names = string.Join("\n", authors.Select(a => $"{a.Authors.AuthorSurname} {a.Authors.AuthorName[0]}.{a.Authors.AuthorFathername[0]}."));
+
+                var grossRevenue = playPerformances.Sum(p => p.TotalRealAmountTickSoldInOfficeOnline);
+                var totalAuthorFee = fees.Any()
+                    ? authors.Zip(fees.Split('\n'), (a, f) =>
+                        playPerformances.Sum(p => p.TotalRealAmountTickSoldInOfficeOnline) * a.RoyaltyPercentage / 100).Sum()
+                    : 0;
+
+                return new AuthorReportData
+                {
+                    PerformanceCount = playPerformances.Count,
+                    DatesFormatted = datesFormatted,
+                    PlayTitle = g.Key,
+                    ContractNumbers = contractNumbers,
+                    RoyaltyPercentages = percentages,
+                    AuthorFees = string.Join("\n", fees),
+                    AuthorJobs = jobs,
+                    AuthorNames = names,
+                    GrossRevenue = grossRevenue,
+                    AuthorFee = totalAuthorFee
+                };
+            })
+            .OrderBy(r => r.DatesFormatted)
+            .ToList();
+
+        return new AuthorReportContainer
         {
-            Author = $"{g.Key.AuthorSurname} {g.Key.AuthorName} {g.Key.AuthorFathername}",
-            TotalRoyalty = g.Sum(pa => performances.Where(p => p.PlayId == pa.PlayId).Sum(p => (p.RealAmountTickSoldInOffice + p.RealAmountTickSoldInOnline) * pa.RoyaltyPercentage / 100))
-        }).ToList();
+            PeriodFrom = authorStartDate,
+            PeriodTo = authorEndDate,
+            Rows = grouped,
+            TotalGrossRevenue = grouped.Sum(r => r.GrossRevenue),
+            TotalAuthorFee = grouped.Sum(r => r.AuthorFee)
+        };
+    }
+
+    private string FormatDatesWithCount(int count, List<string> dates)
+    {
+        var result = new List<string> { count.ToString() };
+
+        for (int i = 0; i < dates.Count; i += 2)
+        {
+            if (i + 1 < dates.Count)
+                result.Add($"{dates[i]}, {dates[i + 1]}");
+            else
+                result.Add(dates[i]);
+        }
+
+        return string.Join("\n", result);
     }
 
     private void Cancel() => Navigation.NavigateTo("/reports");

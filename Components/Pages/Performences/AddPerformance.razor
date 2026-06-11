@@ -539,13 +539,13 @@
                         <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <label>Процент реализации билетов</label>
-                                <AntDesign.InputNumber Min="0" Max="100" Step="0.1" class="form-control" @bind-Value="performance.TicketImplementationPercentage" />
+                                <AntDesign.InputNumber Min="0" Max="100" Step="0.01" class="form-control" @bind-Value="performance.TicketImplementationPercentage" />
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <label>Процент реализации средств</label>
-                                <AntDesign.InputNumber Min="0" Max="100" Step="0.1" class="form-control" @bind-Value="performance.AmountImplementationPercentage" />
+                                <AntDesign.InputNumber Min="0" Max="100" Step="0.01" class="form-control" @bind-Value="performance.AmountImplementationPercentage" />
                             </div>
                         </div>
                     </div>
@@ -947,8 +947,7 @@
     {
         errorMessage = null;
         var file = e.File;
-        if (file == null) 
-            return;
+        if (file == null) return;
 
         using var memoryStream = new MemoryStream();
         await file.OpenReadStream().CopyToAsync(memoryStream);
@@ -958,38 +957,219 @@
         var ws = workbook.Worksheet(1);
 
         var fullLine = string.Join(" ", ws.Row(4).CellsUsed().Select(c => c.GetValue<string>()));
+        ParseHeaderLine(fullLine);
 
-        // Проверка названия
+        if(errorMessage != null)
+        {
+            return;
+        }
+
+        //Значения
+        int lastRow = ws.LastRowUsed()?.RowNumber() ?? 100;
+        bool foundAgentHeader = false;
+        bool foundCashiers = false;
+        bool foundInternet = false;
+        bool foundAll = false;
+        int numberOfCells = 15;
+
+        for (int row = 5; row <= lastRow; row++)
+        {
+            var text = GetRowText(ws, row).ToUpper();
+
+            if (!foundAgentHeader && (text.Contains("НАИМЕНОВАНИЕ") || text.Contains("АГЕНТ") || text.Contains("ФИО")))
+            {
+                foundAgentHeader = true;
+                continue;
+            }
+
+            //Кассиры
+            if (foundAgentHeader && !foundCashiers && text.Contains("КАССИР"))
+            {
+                foundCashiers = true;
+                continue;
+            }
+            if (foundCashiers && !foundInternet && text.Contains("ИТОГО"))
+            {
+                var numbers = GetIntsFromRow(ws, row);
+                if (numbers.Count == numberOfCells)
+                {
+                    performance.NumTickCashOffice = numbers[0];
+                    performance.AmountTickCashOffice = numbers[1];
+                    performance.NumTickNonCashOffice = numbers[2];
+                    performance.AmountTickNonCashOffice = numbers[3];
+                    performance.NumTickRetCashOffice = numbers[4];
+                    performance.AmountFundsRetCashOffice = numbers[5];
+                    performance.NumTickRetNonCashOffice = numbers[6];
+                    performance.AmountFundsRetNonCashOffice = numbers[7];
+                    performance.NumTickSoldCashOffice = numbers[8];
+                    performance.AmountTickSoldCashOffice = numbers[9];
+                    performance.NumTickSoldNonCashOffice = numbers[10];
+                    performance.AmountTickSoldNonCashOffice = numbers[11];
+                    performance.AllNumTickSoldInOffice = numbers[12];
+                    performance.AllAmountTickSoldInOffice = numbers[13];
+                    performance.RealAmountTickSoldInOffice = numbers[14];
+                }
+                continue;
+            }
+
+            //Интернет
+            if (foundCashiers && !foundInternet && (text.Contains("ИНТЕРНЕТ") || text.Contains("ПРОДАЖ")))
+            {
+                foundInternet = true;
+                continue;
+            }
+            if (foundInternet && text.Contains("ИТОГО"))
+            {
+                var numbers = GetIntsFromRow(ws, row);
+                if (numbers.Count == numberOfCells)
+                {
+                    performance.NumTickCashOnline = numbers[0];
+                    performance.AmountTickCashOnline = numbers[1];
+                    performance.NumTickNonCashOnline = numbers[2];
+                    performance.AmountTickNonCashOnline = numbers[3];
+                    performance.NumTickRetCashOnline = numbers[4];
+                    performance.AmountFundsRetCashOnline = numbers[5];
+                    performance.NumTickRetNonCashOnline = numbers[6];
+                    performance.AmountFundsRetNonCashOline = numbers[7];
+                    performance.NumTickSoldCashOnline = numbers[8];
+                    performance.AmountTickSoldCashOnline = numbers[9];
+                    performance.NumTickSoldNonCashOnline = numbers[10];
+                    performance.AmountTickSoldNonCashOnline = numbers[11];
+                    performance.AllNumTickSoldOnline = numbers[12];
+                    performance.AllAmountTickSoldOnline = numbers[13];
+                    performance.RealAmountTickSoldInOnline = numbers[14];
+                }
+                continue;
+            }
+
+            //Всего
+            if (text.Contains("ВСЕГО"))
+            {
+                foundAll = true;
+                var numbers = GetIntsFromRow(ws, row);
+                if (numbers.Count == numberOfCells)
+                {
+                    performance.TotalNumTickSoldCashInOfficeOnline = numbers[0];
+                    performance.TotalAmountTickSoldCashInOfficeOnline = numbers[1];
+                    performance.TotalNumTickSoldNonCashInOfficeOnline = numbers[2];
+                    performance.TotalAmountTickSoldNonCashInOfficeOnline = numbers[3];
+                    performance.TotalNumTickRetCashInOfficeOnline = numbers[4];
+                    performance.TotalAmountFundsRetCashInOfficeOnline = numbers[5];
+                    performance.TotalNumTickRetNonCashInOfficeOnline = numbers[6];
+                    performance.TotalAmountFundsRetNonCashInOfficeOnline = numbers[7];
+                    performance.TotalNumTickSoldCashOfficeOnline = numbers[8];
+                    performance.TotalAmountTickSoldCashOfficeOnline = numbers[9];
+                    performance.TotalNumTickSoldNonCashOfficeOnline = numbers[10];
+                    performance.TotalAmountTickSoldNonCashOfficeOnline = numbers[11];
+                    performance.TotalAllNumTickSoldInOfficeOnline = numbers[12];
+                    performance.TotalAllAmountTickSoldInOfficeOnline = numbers[13];
+                    performance.TotalRealAmountTickSoldInOfficeOnline = numbers[14];
+                }
+                continue;
+            }
+
+            if (foundAll)
+            {
+                numberOfCells = 3;
+                if (text.Contains("КОЛИЧЕСТВО"))
+                {
+                    var ints = GetIntsFromRow(ws, row);
+                    var doubles = GetDoublesFromRow(ws, row);
+
+                    if (ints.Count + doubles.Count >= numberOfCells)
+                    {
+                        performance.Capacity = ints[0];
+                        performance.RemainingCapacity = ints[1];
+                        performance.TicketImplementationPercentage = doubles[3];
+                    }
+                    continue;
+                }
+
+                if (text.Contains("СУММ"))
+                {
+                    var ints = GetIntsFromRow(ws, row);
+                    var doubles = GetDoublesFromRow(ws, row);
+
+                    if (ints.Count + doubles.Count >= numberOfCells)
+                    {
+                        performance.MaxRevenue = ints[0];
+                        performance.RemainingRevenue = ints[1];
+                        performance.AmountImplementationPercentage = doubles[3];
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private string GetRowText(IXLWorksheet ws, int row)
+    {
+        return string.Join(" ", ws.Row(row).CellsUsed().Select(c => c.GetValue<string>() ?? ""));
+    }
+
+    private List<int> GetIntsFromRow(IXLWorksheet ws, int row)
+    {
+        var numbers = new List<int>();
+
+        foreach (var cell in ws.Row(row).CellsUsed())
+        {
+            var value = cell.GetValue<string>();
+            if (string.IsNullOrWhiteSpace(value)) 
+                continue;
+
+            if (int.TryParse(value, out int intVal))
+                numbers.Add(intVal);
+        }
+
+        return numbers;
+    }
+
+    private List<double> GetDoublesFromRow(IXLWorksheet ws, int row)
+    {
+        var numbers = new List<double>();
+
+        foreach (var cell in ws.Row(row).CellsUsed())
+        {
+            var value = cell.GetValue<string>();
+            if (string.IsNullOrWhiteSpace(value)) 
+                continue;
+
+            if (double.TryParse(value, out double dVal))
+                numbers.Add(dVal);
+        }
+
+        return numbers;
+    }
+
+    private void ParseHeaderLine(string fullLine)
+    {
         var titleMatch = System.Text.RegularExpressions.Regex.Match(fullLine, @"^(.+?)\s*\(");
         if (titleMatch.Success)
         {
             var excelTitle = titleMatch.Groups[1].Value.Trim();
-            var currentPlay = await _context.Plays.FindAsync(PlayId);
-
+            var currentPlay =  _context.Plays.Find(PlayId);
             if (currentPlay == null || !excelTitle.Equals(currentPlay.Title, StringComparison.OrdinalIgnoreCase))
             {
                 errorMessage = $"Название в Excel («{excelTitle}») не совпадает с текущим спектаклем («{currentPlay?.Title}»)";
-                StateHasChanged();
                 return;
             }
         }
 
-        // Номер мероприятия
         var numberMatch = System.Text.RegularExpressions.Regex.Match(fullLine, @"№\s*мер-ия\s*(\d+)");
         if (numberMatch.Success)
             performance.PerformanceNumber = int.Parse(numberMatch.Groups[1].Value);
 
-        // Время
         var timeMatch = System.Text.RegularExpressions.Regex.Match(fullLine, @"(\d{2}:\d{2})");
         if (timeMatch.Success)
             performance.SelectedTime = DateTime.ParseExact(timeMatch.Groups[1].Value, "HH:mm", null);
 
-        // Дата
         var dateMatch = System.Text.RegularExpressions.Regex.Match(fullLine, @"(\d{2}\.\d{2}\.\d{4})");
         if (dateMatch.Success)
             performance.SelectedDate = DateTime.ParseExact(dateMatch.Groups[1].Value, "dd.MM.yyyy", null);
 
-        // Сцена
         var sceneMatch = System.Text.RegularExpressions.Regex.Match(fullLine, @"сцена\s*:\s*([^)]+)\)");
         if (sceneMatch.Success)
         {
@@ -1001,8 +1181,6 @@
                 performance.Type = PerformanceType.Stationary;
             }
         }
-
-        StateHasChanged();
     }
 
     private void Cancel()
